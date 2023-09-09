@@ -1,0 +1,13 @@
+[package]
+name = "nanobot"
+version = "0.1.0"
+edition = "2021"
+description = "Discord bot to authenticate and de-anonymise users"
+homepage = "https://github.com/supleed2/nanobot"
+repository = "https://github.com/supleed2/nanobot"
+license = "ISC"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
