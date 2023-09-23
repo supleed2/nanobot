@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"i64!\" from members",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "i64!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b2eb28ae45dbd52f32c437b6f8a99d993c838afa170e67df23e4413bcc27ce92"
+}

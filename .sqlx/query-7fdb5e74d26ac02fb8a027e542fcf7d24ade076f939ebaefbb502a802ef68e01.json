@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from pending where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7fdb5e74d26ac02fb8a027e542fcf7d24ade076f939ebaefbb502a802ef68e01"
+}

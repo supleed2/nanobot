@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from pending where discord_id=$1 returning *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "realname",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "7265c99235c9deff752d1a21aa38f8b33148b3e252924370a66e799b2aa4b23b"
+}

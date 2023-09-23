@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select * from members where realname=$1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "realname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "fresher",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "56f54bfdc63d7c09add2bb4dec1e6a4544a684611755bcf2fa9424702ecd11cf"
+}

@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from manual where discord_id=$1 returning *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "realname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "fresher",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "560961426f3fb5eb6a020f7d4dff7015fdbe80647bb9d17ef71e7846177fd698"
+}

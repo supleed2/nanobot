@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from manual",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "bc57cdf4b9c32e56068c1659e3b677a9e563557008c42b798e5afd0686c0acd2"
+}

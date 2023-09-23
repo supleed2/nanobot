@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select * from pending",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "realname",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5103448285fcc839f2fd049496e0a627e444361a3d0967f5ef8a4d33d57fa1da"
+}

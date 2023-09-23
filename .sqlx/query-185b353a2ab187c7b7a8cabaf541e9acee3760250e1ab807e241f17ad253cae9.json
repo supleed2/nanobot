@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from pending",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "185b353a2ab187c7b7a8cabaf541e9acee3760250e1ab807e241f17ad253cae9"
+}
