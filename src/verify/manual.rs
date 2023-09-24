@@ -284,6 +284,7 @@ pub(crate) async fn manual_4(
             }
         }
     } else {
+        crate::db::delete_manual_by_id(&data.db, user.id.0 as i64).await?;
         println!("{} ({}) denied via manual", user.name, user.id);
         m.create_interaction_response(&ctx.http, |i| {
             i.kind(serenity::InteractionResponseType::UpdateMessage)
