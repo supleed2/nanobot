@@ -49,28 +49,72 @@ struct ManualMember {
 #[shuttle_runtime::main]
 async fn poise(
     #[shuttle_secrets::Secrets] secret_store: shuttle_secrets::SecretStore,
-    // #[shuttle_shared_db::Postgres] _pool: sqlx::PgPool,
-) -> shuttle_poise::ShuttlePoise<Data, Error> {
-    Ok(poise::Framework::builder()
+    // Load secrets
+    let au_ch_id = secret_store
+        .get("AU_CHANNEL_ID")
+        .expect("AU_CHANNEL_ID not found")
+        .parse()
+        .expect("AU_CHANNEL_ID not valid u64");
+    let ea_key = secret_store
+        .get("EA_API_KEY")
+        .expect("EA_API_KEY not found");
+    let ea_url = secret_store
+        .get("EA_API_URL")
+        .expect("EA_API_URL not found");
+    let token = secret_store
+        .get("DISCORD_TOKEN")
+        .expect("DISCORD_TOKEN not found");
+    let fresher = secret_store
+        .get("FRESHER_ID")
+        .expect("FRESHER_ID not found")
+        .parse()
+        .expect("FRESHER_ID not valid u64");
+    let member = secret_store
+        .get("MEMBER_ID")
+        .expect("MEMBER_ID not found")
+        .parse()
+        .expect("MEMBER_ID not valid u64");
+
         .options(poise::FrameworkOptions {
-            commands: vec![register(), setup()],
+            commands: vec![
+                cmds::cmds(),
+                cmds::setup(),
+                cmds::count_members(),
+                cmds::delete_member(),
+                cmds::get_all_members(),
+                cmds::get_member(),
+                cmds::add_member(),
+                cmds::insert_member_from_pending(),
+                cmds::insert_member_from_manual(),
+                cmds::count_pending(),
+                cmds::delete_pending(),
+                cmds::get_all_pending(),
+                cmds::get_pending(),
+                cmds::add_pending(),
+                cmds::delete_all_pending(),
+                cmds::count_manual(),
+                cmds::delete_manual(),
+                cmds::get_all_manual(),
+                cmds::get_manual(),
+                cmds::add_manual(),
+                cmds::delete_all_manual(),
+            ],
+            event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
             ..Default::default()
         })
-        .token(
-            secret_store
-                .get("DISCORD_TOKEN")
-                .context("DISCORD_TOKEN not found")?,
-        )
+        .token(token)
         .intents(serenity::GatewayIntents::non_privileged())
-        .setup(|_, _, _| Box::pin(async { Ok(Data {}) }))
-        .build()
-        .await
-        .map_err(shuttle_runtime::CustomError::new)?
-        .into())
-}
-
-// Links for info:
-// https://github.com/serenity-rs/poise
-// https://github.com/serenity-rs/poise/tree/current/examples
-// https://github.com/shuttle-hq/shuttle-examples/blob/main/poise/hello-world/src/main.rs
-// https://github.com/rust-community-discord/ferrisbot-for-discord/blob/main/src/main.rs#L154
+        .setup(move |ctx, _, _| {
+            Box::pin(async move {
+                ctx.set_activity(serenity::Activity::competing("autoverification"))
+                    .await;
+                Ok(Data {
+                    au_ch_id,
+                    db: pool,
+                    ea_key,
+                    ea_url,
+                    fresher,
+                    member,
+                })
+            })
+        });
