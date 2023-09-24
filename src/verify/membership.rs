@@ -143,6 +143,12 @@ pub(crate) async fn membership_3(
             .await
             .is_ok()
             {
+                println!(
+                    "{} ({}) added via membership{}",
+                    m.user.name,
+                    m.user.id,
+                    if fresher { " (fresher)" } else { "" }
+                );
                 let mut mm = m.member.clone().unwrap();
                 crate::verify::apply_role(ctx, &mut mm, data.member).await?;
                 if fresher {
@@ -162,12 +168,6 @@ pub(crate) async fn membership_3(
                         })
                 })
                 .await?;
-                println!(
-                    "{} ({}) added via membership{}",
-                    m.user.name,
-                    m.user.id,
-                    if fresher { " (fresher)" } else { "" }
-                );
                 data.au_ch_id
                     .send_message(&ctx.http, |cm| {
                         cm.add_embed(|e| {

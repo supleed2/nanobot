@@ -223,6 +223,8 @@ pub(crate) async fn manual_4(
         .await
         .unwrap_or_default();
 
+    let mut member = data.server.member(&ctx.http, &user).await?;
+
     if verify {
         match crate::db::insert_member_from_manual(&data.db, user.id.0 as i64).await {
             Ok(()) => {
@@ -230,16 +232,21 @@ pub(crate) async fn manual_4(
                     .await?
                     .unwrap()
                     .fresher;
-                let mut mm = m.member.clone().unwrap();
-                crate::verify::apply_role(ctx, &mut mm, data.member).await?;
+                println!(
+                    "{} ({}) added via manual{}",
+                    user.name,
+                    user.id,
+                    if fresher { " (fresher)" } else { "" }
+                );
+                crate::verify::apply_role(ctx, &mut member, data.member).await?;
                 if fresher {
-                    crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                    crate::verify::apply_role(ctx, &mut member, data.fresher).await?;
                 }
                 m.create_interaction_response(&ctx.http, |i| {
                     i.kind(serenity::InteractionResponseType::UpdateMessage)
                         .interaction_response_data(|d| {
                             d.components(|c| c).embed(|e| {
-                                e.thumbnail(m.user.avatar_url().unwrap_or(
+                                e.thumbnail(user.avatar_url().unwrap_or(
                                     "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
                                 ))
                                 .title("Member verified via manual")
@@ -249,7 +256,7 @@ pub(crate) async fn manual_4(
                             })
                         })
                 })
-                .await?
+                .await?;
             }
             Err(e) => {
                 eprintln!("Error: {e}");
@@ -263,7 +270,7 @@ pub(crate) async fn manual_4(
             }
         }
     } else {
-        println!("{} ({}) denied via manual", m.user.name, m.user.id);
+        println!("{} ({}) denied via manual", user.name, user.id);
         m.create_interaction_response(&ctx.http, |i| {
             i.kind(serenity::InteractionResponseType::UpdateMessage)
                 .interaction_response_data(|d| {

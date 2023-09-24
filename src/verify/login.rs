@@ -217,6 +217,12 @@ pub(crate) async fn login_6(
             .await
             {
                 Ok(()) => {
+                    println!(
+                        "{} ({}) added via login{}",
+                        m.user.name,
+                        m.user.id,
+                        if fresher { " (fresher)" } else { "" }
+                    );
                     let mut mm = m.member.clone().unwrap();
                     crate::verify::apply_role(ctx, &mut mm, data.member).await?;
                     if fresher {
@@ -236,12 +242,6 @@ pub(crate) async fn login_6(
                             })
                     })
                     .await?;
-                    println!(
-                        "{} ({}) added via login{}",
-                        m.user.name,
-                        m.user.id,
-                        if fresher { " (fresher)" } else { "" }
-                    );
                     data.au_ch_id
                         .send_message(&ctx.http, |cm| {
                             cm.add_embed(|e| {
