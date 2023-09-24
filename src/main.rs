@@ -97,6 +97,9 @@ async fn poise(
                 move |body| routes::verify(pool, body, key)
             }),
         );
+
+    // Build Poise Instance
+    let discord = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![
                 cmds::cmds(),
