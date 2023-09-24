@@ -118,3 +118,61 @@ async fn poise(
                 })
             })
         });
+
+async fn event_handler(
+    ctx: &serenity::Context,
+    event: &poise::Event<'_>,
+    _framework: poise::FrameworkContext<'_, Data, Error>,
+    data: &Data,
+) -> Result<(), Error> {
+    match event {
+        poise::Event::GuildMemberAddition { new_member } => {
+            println!("Member joined:\n{:#?}", new_member)
+        }
+        poise::Event::InteractionCreate {
+            interaction: serenity::Interaction::MessageComponent(m),
+        } => {
+            println!("Interaction: {} by \"{}\"", m.data.custom_id, m.user.name);
+            match m.data.custom_id.as_str() {
+                "register.global" | "unregister.global" | "register.guild" | "unregister.guild" => {
+                }
+                "start" => verify::start(ctx, m, data, true).await?,
+                "restart" => verify::start(ctx, m, data, false).await?,
+                "login_1" => verify::login_1(ctx, m).await?,
+                "login_2" => verify::login_2(ctx, m, data).await?,
+                "login_3" => verify::login_3(ctx, m).await?,
+                "login_4f" => verify::login_4(ctx, m, true).await?,
+                "login_4n" => verify::login_4(ctx, m, false).await?,
+                "login_5f" => verify::login_5(ctx, m, true).await?,
+                "login_5n" => verify::login_5(ctx, m, false).await?,
+                "membership_1" => verify::membership_1(ctx, m).await?,
+                "membership_2f" => verify::membership_2(ctx, m, data, true).await?,
+                "membership_2n" => verify::membership_2(ctx, m, data, false).await?,
+                "manual_1" => verify::manual_1(ctx, m).await?,
+                "manual_2f" => verify::manual_2(ctx, m, data, true).await?,
+                "manual_2n" => verify::manual_2(ctx, m, data, false).await?,
+                id if id.starts_with("verify-") => verify::manual_4(ctx, m, data, id).await?,
+                _ => {
+                    println!("Unknown interaction, printing:\n{m:#?}");
+                    verify::unknown(ctx, m).await?
+                }
+            }
+        }
+        poise::Event::InteractionCreate {
+            interaction: serenity::Interaction::ModalSubmit(m),
+        } => {
+            println!("Modal submit: {} by \"{}\"", m.data.custom_id, m.user.name);
+            match m.data.custom_id.as_str() {
+                "login_6f" => verify::login_6(ctx, m, data, true).await?,
+                "login_6n" => verify::login_6(ctx, m, data, false).await?,
+                "membership_3f" => verify::membership_3(ctx, m, data, true).await?,
+                "membership_3n" => verify::membership_3(ctx, m, data, false).await?,
+                "manual_3f" => verify::manual_3(ctx, m, data, true).await?,
+                "manual_3n" => verify::manual_3(ctx, m, data, false).await?,
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
