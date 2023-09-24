@@ -1,27 +1,49 @@
 use anyhow::Context as _;
 use poise::serenity_prelude as serenity;
 
-struct Data {} // User data, which is stored and accessible in all command invocations
-type Error = Box<dyn std::error::Error + Send + Sync>;
+mod cmds;
+mod db;
+mod ea;
+mod routes;
+mod service;
+mod verify;
 
-/// Buttons to (de-)register application commands globally or by guild
-#[poise::command(prefix_command)]
-async fn register(ctx: poise::Context<'_, Data, Error>) -> Result<(), Error> {
-    poise::builtins::register_application_commands_buttons(ctx).await?;
-    Ok(())
+/// Program data, which is stored and accessible in all command invocations
+struct Data {
+    au_ch_id: serenity::ChannelId,
+    db: sqlx::PgPool,
+    ea_key: String,
+    ea_url: String,
+    fresher: serenity::RoleId,
+    member: serenity::RoleId,
 }
 
-/// Send (customisable) verification introduction message in specified channel
-#[poise::command(slash_command)]
-async fn setup(
-    ctx: poise::Context<'_, Data, Error>,
-    #[description = "Channel to send verification introduction message in"]
-    #[channel_types("Text", "News")]
-    channel: serenity::GuildChannel,
-) -> Result<(), Error> {
-    let resp = format!("You selected channel: {}", channel);
-    ctx.say(resp).await?;
-    Ok(())
+type ACtx<'a> = poise::ApplicationContext<'a, Data, Error>;
+type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+#[derive(Debug)]
+struct Member {
+    discord_id: i64,
+    shortcode: String,
+    nickname: String,
+    realname: String,
+    fresher: bool,
+}
+
+#[derive(Debug)]
+struct PendingMember {
+    discord_id: i64,
+    shortcode: String,
+    realname: String,
+}
+
+#[derive(Debug)]
+struct ManualMember {
+    discord_id: i64,
+    shortcode: String,
+    nickname: String,
+    realname: String,
+    fresher: bool,
 }
 
 #[shuttle_runtime::main]
