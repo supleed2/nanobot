@@ -255,6 +255,20 @@ pub(crate) async fn login_6(
                             })
                         })
                         .await?;
+                    data.gn_ch_id
+                        .send_message(&ctx.http, |cm| {
+                            cm.content(format!(
+                                "Welcome to ICAS {}, if you have any questions, feel free \
+                            to ping a committee member{}!",
+                                m.user,
+                                if fresher {
+                                    ", and look out for other freshers in green"
+                                } else {
+                                    ""
+                                }
+                            ))
+                        })
+                        .await?;
                 }
                 Err(e) => {
                     eprintln!("Error: {e}");
