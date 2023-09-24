@@ -180,6 +180,7 @@ async fn event_handler(
             match m.data.custom_id.as_str() {
                 "register.global" | "unregister.global" | "register.guild" | "unregister.guild" => {
                 }
+                "info" => verify::info(ctx, m).await?,
                 "start" => verify::start(ctx, m, data, true).await?,
                 "restart" => verify::start(ctx, m, data, false).await?,
                 "login_1" => verify::login_1(ctx, m).await?,

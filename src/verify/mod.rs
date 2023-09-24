@@ -10,6 +10,26 @@ pub(crate) use membership::*;
 pub(crate) mod manual;
 pub(crate) use manual::*;
 
+const INFO_MSG: &str = indoc::indoc! {"
+    Nano is a Discord bot written with serenity-rs/poise and tokio-rs/axum.
+
+    It allows members and Imperial students to automatically verify themselves and gain access to the ICAS Discord server.
+
+    If you have any questions, feel free to ping or message <@99217900254035968>
+"};
+
+pub(crate) async fn info(
+    ctx: &serenity::Context,
+    m: &serenity::MessageComponentInteraction,
+) -> Result<(), Error> {
+    m.create_interaction_response(&ctx.http, |i| {
+        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
+            .interaction_response_data(|d| d.content(INFO_MSG).ephemeral(true))
+    })
+    .await?;
+    Ok(())
+}
+
 pub(crate) async fn unknown(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
