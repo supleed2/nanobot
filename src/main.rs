@@ -15,6 +15,7 @@ struct Data {
     ea_key: String,
     ea_url: String,
     fresher: serenity::RoleId,
+    gn_ch_id: serenity::ChannelId,
     member: serenity::RoleId,
 }
 
@@ -77,6 +78,11 @@ async fn poise(
         .expect("FRESHER_ID not found")
         .parse()
         .expect("FRESHER_ID not valid u64");
+    let gn_ch_id = secret_store
+        .get("GN_CHANNEL_ID")
+        .expect("GN_CHANNEL_ID not found")
+        .parse()
+        .expect("GN_CHANNEL_ID not valid u64");
     let member = secret_store
         .get("MEMBER_ID")
         .expect("MEMBER_ID not found")
@@ -139,6 +145,7 @@ async fn poise(
                     ea_key,
                     ea_url,
                     fresher,
+                    gn_ch_id,
                     member,
                 })
             })
