@@ -17,6 +17,7 @@ struct Data {
     fresher: serenity::RoleId,
     gn_ch_id: serenity::ChannelId,
     member: serenity::RoleId,
+    server: serenity::GuildId,
 }
 
 type ACtx<'a> = poise::ApplicationContext<'a, Data, Error>;
@@ -88,6 +89,12 @@ async fn poise(
         .expect("MEMBER_ID not found")
         .parse()
         .expect("MEMBER_ID not valid u64");
+    let server = secret_store
+        .get("SERVER_ID")
+        .expect("SERVER_ID not found")
+        .parse::<u64>()
+        .expect("SERVER_ID not valid u64")
+        .into();
 
     // Build Axum Router
     use axum::routing::{get, post};
@@ -147,6 +154,7 @@ async fn poise(
                     fresher,
                     gn_ch_id,
                     member,
+                    server,
                 })
             })
         });
