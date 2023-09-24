@@ -49,6 +49,14 @@ struct ManualMember {
 #[shuttle_runtime::main]
 async fn poise(
     #[shuttle_secrets::Secrets] secret_store: shuttle_secrets::SecretStore,
+    #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
+) -> Result<service::NanoBot, shuttle_runtime::Error> {
+    // Run SQLx Migrations
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .map_err(shuttle_runtime::CustomError::new)?;
+
     // Load secrets
     let au_ch_id = secret_store
         .get("AU_CHANNEL_ID")
@@ -75,6 +83,20 @@ async fn poise(
         .parse()
         .expect("MEMBER_ID not valid u64");
 
+    // Build Axum Router
+    use axum::routing::{get, post};
+    let router = axum::Router::new()
+        .route("/", get(routes::hello_world))
+        .route(
+            "/verify",
+            post({
+                let pool = pool.clone();
+                let key = secret_store
+                    .get("VERIFY_KEY")
+                    .context("VERIFY_KEY not found")?;
+                move |body| routes::verify(pool, body, key)
+            }),
+        );
         .options(poise::FrameworkOptions {
             commands: vec![
                 cmds::cmds(),
@@ -118,6 +140,10 @@ async fn poise(
                 })
             })
         });
+
+    // Return NanoBot
+    Ok(service::NanoBot { router, discord })
+}
 
 async fn event_handler(
     ctx: &serenity::Context,
