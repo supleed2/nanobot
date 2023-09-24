@@ -235,7 +235,26 @@ pub(crate) async fn login_6(
                                 .components(|c| c)
                             })
                     })
-                    .await?
+                    .await?;
+                    println!(
+                        "{} ({}) added via login{}",
+                        m.user.name,
+                        m.user.id,
+                        if fresher { " (fresher)" } else { "" }
+                    );
+                    data.au_ch_id
+                        .send_message(&ctx.http, |cm| {
+                            cm.add_embed(|e| {
+                                e.thumbnail(m.user.avatar_url().unwrap_or(
+                                    "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
+                                ))
+                                .title("Member verified via login")
+                                .description(&m.user)
+                                .field("Fresher", fresher, true)
+                                .timestamp(serenity::Timestamp::now())
+                            })
+                        })
+                        .await?;
                 }
                 Err(e) => {
                     eprintln!("Error: {e}");

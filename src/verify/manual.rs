@@ -223,43 +223,61 @@ pub(crate) async fn manual_4(
         .await
         .unwrap_or_default();
 
-    match crate::db::insert_member_from_manual(&data.db, user.id.0 as i64).await {
-        Ok(()) => {
-            let fresher = crate::db::get_member_by_id(&data.db, user.id.0 as i64)
-                .await?
-                .unwrap()
-                .fresher;
-            let mut mm = m.member.clone().unwrap();
-            crate::verify::apply_role(ctx, &mut mm, data.member).await?;
-            if fresher {
-                crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
-            }
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::UpdateMessage)
-                    .interaction_response_data(|d| {
-                        d.components(|c| c).embed(|e| {
-                            e.title(format!(
-                                "Verification {} for",
-                                if verify { "accepted" } else { "denied" },
-                            ))
-                            .description(&user)
-                            .thumbnail(user.avatar_url().unwrap_or_default())
-                            .timestamp(serenity::Timestamp::now())
+    if verify {
+        match crate::db::insert_member_from_manual(&data.db, user.id.0 as i64).await {
+            Ok(()) => {
+                let fresher = crate::db::get_member_by_id(&data.db, user.id.0 as i64)
+                    .await?
+                    .unwrap()
+                    .fresher;
+                let mut mm = m.member.clone().unwrap();
+                crate::verify::apply_role(ctx, &mut mm, data.member).await?;
+                if fresher {
+                    crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                }
+                m.create_interaction_response(&ctx.http, |i| {
+                    i.kind(serenity::InteractionResponseType::UpdateMessage)
+                        .interaction_response_data(|d| {
+                            d.components(|c| c).embed(|e| {
+                                e.thumbnail(m.user.avatar_url().unwrap_or(
+                                    "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
+                                ))
+                                .title("Member verified via manual")
+                                .description(&user)
+                                .field("Fresher", fresher, true)
+                                .timestamp(serenity::Timestamp::now())
+                            })
                         })
-                    })
-            })
-            .await?
+                })
+                .await?
+            }
+            Err(e) => {
+                eprintln!("Error: {e}");
+                m.create_interaction_response(&ctx.http, |i| {
+                    i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|d| {
+                            d.content(format!("Failed to add user {user} to member database"))
+                        })
+                })
+                .await?
+            }
         }
-        Err(e) => {
-            eprintln!("Error: {e}");
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|d| {
-                        d.content(format!("Failed to add user {user} to member database"))
+    } else {
+        println!("{} ({}) denied via manual", m.user.name, m.user.id);
+        m.create_interaction_response(&ctx.http, |i| {
+            i.kind(serenity::InteractionResponseType::UpdateMessage)
+                .interaction_response_data(|d| {
+                    d.components(|c| c).embed(|e| {
+                        e.title("Member denied via manual")
+                            .description(&user)
+                            .thumbnail(user.avatar_url().unwrap_or(
+                                "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
+                            ))
+                            .timestamp(serenity::Timestamp::now())
                     })
-            })
-            .await?
-        }
+                })
+        })
+        .await?
     }
 
     Ok(())
