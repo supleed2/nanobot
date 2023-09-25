@@ -67,10 +67,10 @@ pub(crate) async fn membership_2(
     fresher: bool,
 ) -> Result<(), Error> {
     // Delete from pending if exists
-    let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.0 as i64).await;
+    let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.into()).await;
 
     // Delete from manual if exists
-    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.0 as i64).await;
+    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
     m.create_interaction_response(&ctx.http, |i| {
         *i = Membership::create(
@@ -133,7 +133,7 @@ pub(crate) async fn membership_3(
             if crate::db::insert_member(
                 &data.db,
                 crate::Member {
-                    discord_id: m.user.id.0 as i64,
+                    discord_id: m.user.id.into(),
                     shortcode,
                     nickname,
                     realname: format!("{} {}", member.first_name, member.surname),

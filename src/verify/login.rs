@@ -56,7 +56,7 @@ pub(crate) async fn login_2(
     m: &serenity::MessageComponentInteraction,
     data: &Data,
 ) -> Result<(), Error> {
-    match crate::db::get_pending_by_id(&data.db, m.user.id.0 as i64).await {
+    match crate::db::get_pending_by_id(&data.db, m.user.id.into()).await {
         Err(e) => {
             eprintln!("Error in login_2: {e}");
             m.create_interaction_response(&ctx.http, |i| {
@@ -206,11 +206,11 @@ pub(crate) async fn login_6(
     match Nickname::parse(m.data.clone()) {
         Ok(Nickname { nickname }) => {
             // Delete from manual if exists
-            let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.0 as i64).await;
+            let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
             match crate::db::insert_member_from_pending(
                 &data.db,
-                m.user.id.0 as i64,
+                m.user.id.into(),
                 &nickname,
                 fresher,
             )

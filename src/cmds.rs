@@ -89,7 +89,7 @@ pub(crate) async fn delete_member(
     remove_roles: Option<bool>,
 ) -> Result<(), Error> {
     println!("Cmd: ({}) delete_member {id}", ctx.author().name);
-    match db::delete_member_by_id(&ctx.data().db, id.user.id.0 as i64).await? {
+    match db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         true => {
             if remove_roles.unwrap_or(true) {
                 let mut m = id.clone();
@@ -136,7 +136,7 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
     }
 }
 
-/// Unreachable, used to create command folder
+/// Unreachable, used to create get_member command folder
 #[poise::command(
     slash_command,
     subcommands(
@@ -154,7 +154,7 @@ pub(crate) async fn get_member(_ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command, rename = "id")]
 pub(crate) async fn get_member_by_id(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) get_member_by_id {id}", ctx.author().name);
-    match db::get_member_by_id(&ctx.data().db, id.id.0 as i64).await? {
+    match db::get_member_by_id(&ctx.data().db, id.id.into()).await? {
         Some(m) => {
             ctx.say(format!("Member info for {id}:\n```rust\n{m:#?}\n```"))
                 .await?
@@ -247,7 +247,7 @@ pub(crate) async fn add_member(
     db::insert_member(
         &ctx.data().db,
         Member {
-            discord_id: id.user.id.0 as i64,
+            discord_id: id.user.id.into(),
             shortcode,
             nickname,
             realname,
@@ -276,7 +276,7 @@ pub(crate) async fn insert_member_from_pending(
         "Cmd: ({}) insert_member_from_pending {id}",
         ctx.author().name
     );
-    match db::insert_member_from_pending(&ctx.data().db, id.id.0 as i64, &nickname, fresher).await {
+    match db::insert_member_from_pending(&ctx.data().db, id.id.into(), &nickname, fresher).await {
         Ok(()) => {
             ctx.say(format!("Member moved from pending to members table: {id}"))
                 .await?
@@ -296,7 +296,7 @@ pub(crate) async fn insert_member_from_manual(
         "Cmd: ({}) insert_member_from_manual {id}",
         ctx.author().name
     );
-    match db::insert_member_from_manual(&ctx.data().db, id.id.0 as i64).await {
+    match db::insert_member_from_manual(&ctx.data().db, id.id.into()).await {
         Ok(()) => {
             ctx.say(format!("Member moved from manual to members table: {id}"))
                 .await?
@@ -320,7 +320,7 @@ pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) delete_pending {id}", ctx.author().name);
-    match db::delete_pending_by_id(&ctx.data().db, id.id.0 as i64).await? {
+    match db::delete_pending_by_id(&ctx.data().db, id.id.into()).await? {
         true => {
             ctx.say(format!("Successfully deleted pending member info for {id}"))
                 .await?
@@ -364,7 +364,7 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn get_pending(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) get_pending {id}", ctx.author().name);
-    match db::get_pending_by_id(&ctx.data().db, id.id.0 as i64).await? {
+    match db::get_pending_by_id(&ctx.data().db, id.id.into()).await? {
         Some(p) => {
             ctx.say(format!("Pending info for {id}:\n```rust\n{p:#?}\n```"))
                 .await?
@@ -389,7 +389,7 @@ pub(crate) async fn add_pending(
     db::insert_pending(
         &ctx.data().db,
         PendingMember {
-            discord_id: id.id.0 as i64,
+            discord_id: id.id.into(),
             shortcode,
             realname,
         },
@@ -440,7 +440,7 @@ pub(crate) async fn count_manual(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn delete_manual(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) delete_manual {id}", ctx.author().name);
-    match db::delete_manual_by_id(&ctx.data().db, id.id.0 as i64).await? {
+    match db::delete_manual_by_id(&ctx.data().db, id.id.into()).await? {
         true => {
             ctx.say(format!("Successfully deleted manual member info for {id}"))
                 .await?
@@ -484,7 +484,7 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn get_manual(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) get_manual {id}", ctx.author().name);
-    match db::get_manual_by_id(&ctx.data().db, id.id.0 as i64).await? {
+    match db::get_manual_by_id(&ctx.data().db, id.id.into()).await? {
         Some(m) => {
             ctx.say(format!("Manual info for {id}:\n```rust\n{m:#?}\n```"))
                 .await?
@@ -511,7 +511,7 @@ pub(crate) async fn add_manual(
     db::insert_manual(
         &ctx.data().db,
         ManualMember {
-            discord_id: id.id.0 as i64,
+            discord_id: id.id.into(),
             shortcode,
             nickname,
             realname,

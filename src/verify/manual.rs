@@ -75,7 +75,7 @@ pub(crate) async fn manual_2(
     fresher: bool,
 ) -> Result<(), Error> {
     // Delete from manual if exists
-    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.0 as i64).await;
+    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
     m.create_interaction_response(&ctx.http, |i| {
         *i = Manual::create(
@@ -118,7 +118,7 @@ pub(crate) async fn manual_3(
             }
 
             // Delete from pending if exists
-            let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.0 as i64).await?;
+            let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.into()).await?;
 
             let prompt_sent = data
                 .au_ch_id
@@ -160,7 +160,7 @@ pub(crate) async fn manual_3(
             let inserted = crate::db::insert_manual(
                 &data.db,
                 crate::ManualMember {
-                    discord_id: m.user.id.0 as i64,
+                    discord_id: m.user.id.into(),
                     shortcode,
                     nickname,
                     realname,
@@ -226,9 +226,9 @@ pub(crate) async fn manual_4(
     let mut member = data.server.member(&ctx.http, &user).await?;
 
     if verify {
-        match crate::db::insert_member_from_manual(&data.db, user.id.0 as i64).await {
+        match crate::db::insert_member_from_manual(&data.db, user.id.into()).await {
             Ok(()) => {
-                let fresher = crate::db::get_member_by_id(&data.db, user.id.0 as i64)
+                let fresher = crate::db::get_member_by_id(&data.db, user.id.into())
                     .await?
                     .unwrap()
                     .fresher;
@@ -284,7 +284,7 @@ pub(crate) async fn manual_4(
             }
         }
     } else {
-        crate::db::delete_manual_by_id(&data.db, user.id.0 as i64).await?;
+        crate::db::delete_manual_by_id(&data.db, user.id.into()).await?;
         println!("{} ({}) denied via manual", user.name, user.id);
         m.create_interaction_response(&ctx.http, |i| {
             i.kind(serenity::InteractionResponseType::UpdateMessage)
