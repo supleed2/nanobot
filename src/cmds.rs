@@ -18,7 +18,6 @@ pub(crate) async fn setup(
     #[channel_types("Text", "News")]
     channel: serenity::GuildChannel,
 ) -> Result<(), Error> {
-    println!("Cmd: ({}) setup", ctx.author().name);
     #[derive(Modal)]
     struct Setup {
         #[name = "Contents of the verification intro message"]
@@ -35,6 +34,8 @@ pub(crate) async fn setup(
         #[max_length = 80]
         text: Option<String>,
     }
+
+    println!("Cmd: ({}) setup", ctx.author().name);
 
     if let Some(Setup {
         message,
@@ -89,22 +90,17 @@ pub(crate) async fn delete_member(
     remove_roles: Option<bool>,
 ) -> Result<(), Error> {
     println!("Cmd: ({}) delete_member {id}", ctx.author().name);
-    match db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
-        true => {
-            if remove_roles.unwrap_or(true) {
-                let mut m = id.clone();
-                crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().member)
-                    .await?;
-                crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().fresher)
-                    .await?;
-            }
-            ctx.say(format!("Successfully deleted member info for {id}"))
-                .await?
+    if db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
+        if remove_roles.unwrap_or(true) {
+            let mut m = id.clone();
+            crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().member).await?;
+            crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().fresher).await?;
         }
-        false => {
-            ctx.say(format!("Failed to delete member info for {id}"))
-                .await?
-        }
+        ctx.say(format!("Successfully deleted member info for {id}"))
+            .await?
+    } else {
+        ctx.say(format!("Failed to delete member info for {id}"))
+            .await?
     };
     Ok(())
 }
@@ -112,13 +108,14 @@ pub(crate) async fn delete_member(
 /// Print all members in members table
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) get_all_members", ctx.author().name);
     #[derive(Modal)]
     struct Confirm {
         #[name = "This will output the members db as text"]
         #[placeholder = "yes"]
         confirm: String,
     }
+
+    println!("Cmd: ({}) get_all_members", ctx.author().name);
 
     if let Some(Confirm { confirm }) = Confirm::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -320,15 +317,12 @@ pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) delete_pending {id}", ctx.author().name);
-    match db::delete_pending_by_id(&ctx.data().db, id.id.into()).await? {
-        true => {
-            ctx.say(format!("Successfully deleted pending member info for {id}"))
-                .await?
-        }
-        false => {
-            ctx.say(format!("Failed to delete pending member info for {id}"))
-                .await?
-        }
+    if db::delete_pending_by_id(&ctx.data().db, id.id.into()).await? {
+        ctx.say(format!("Successfully deleted pending member info for {id}"))
+            .await?
+    } else {
+        ctx.say(format!("Failed to delete pending member info for {id}"))
+            .await?
     };
     Ok(())
 }
@@ -336,13 +330,14 @@ pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::User) -> Result<
 /// Print all pending members in pending table
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) get_all_pending", ctx.author().name);
     #[derive(Modal)]
     struct ConfirmPending {
         #[name = "This will output the pending db as text"]
         #[placeholder = "yes"]
         confirm: String,
     }
+
+    println!("Cmd: ({}) get_all_pending", ctx.author().name);
 
     if let Some(ConfirmPending { confirm }) = ConfirmPending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -402,13 +397,14 @@ pub(crate) async fn add_pending(
 /// Delete all pending members in pending table
 #[poise::command(slash_command)]
 pub(crate) async fn delete_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) delete_all_pending", ctx.author().name);
     #[derive(Modal)]
     struct ConfirmPurgePending {
         #[name = "This will wipe the pending db"]
         #[placeholder = "yes"]
         confirm: String,
     }
+
+    println!("Cmd: ({}) delete_all_pending", ctx.author().name);
 
     if let Some(ConfirmPurgePending { confirm }) = ConfirmPurgePending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -440,15 +436,12 @@ pub(crate) async fn count_manual(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn delete_manual(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
     println!("Cmd: ({}) delete_manual {id}", ctx.author().name);
-    match db::delete_manual_by_id(&ctx.data().db, id.id.into()).await? {
-        true => {
-            ctx.say(format!("Successfully deleted manual member info for {id}"))
-                .await?
-        }
-        false => {
-            ctx.say(format!("Failed to delete manual member info for {id}"))
-                .await?
-        }
+    if db::delete_manual_by_id(&ctx.data().db, id.id.into()).await? {
+        ctx.say(format!("Successfully deleted manual member info for {id}"))
+            .await?
+    } else {
+        ctx.say(format!("Failed to delete manual member info for {id}"))
+            .await?
     };
     Ok(())
 }
@@ -456,13 +449,14 @@ pub(crate) async fn delete_manual(ctx: ACtx<'_>, id: serenity::User) -> Result<(
 /// Print all manual members in manual table
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) get_all_manual", ctx.author().name);
     #[derive(Modal)]
     struct ConfirmManual {
         #[name = "This will output the manual db as text"]
         #[placeholder = "yes"]
         confirm: String,
     }
+
+    println!("Cmd: ({}) get_all_manual", ctx.author().name);
 
     if let Some(ConfirmManual { confirm }) = ConfirmManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -526,13 +520,14 @@ pub(crate) async fn add_manual(
 /// Delete all manual members in manual table
 #[poise::command(slash_command)]
 pub(crate) async fn delete_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) delete_all_manual", ctx.author().name);
     #[derive(Modal)]
     struct ConfirmPurgeManual {
         #[name = "This will wipe the manual db"]
         #[placeholder = "yes"]
         confirm: String,
     }
+
+    println!("Cmd: ({}) delete_all_manual", ctx.author().name);
 
     if let Some(ConfirmPurgeManual { confirm }) = ConfirmPurgeManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {

@@ -114,21 +114,18 @@ pub(crate) async fn membership_3(
                     return Ok(());
                 }
             };
-            let member = match members
+            let Some(member) = members
                 .iter()
                 .find(|&member| member.order_no.to_string() == order && member.login == shortcode)
-            {
-                Some(m) => m,
-                None => {
-                    m.create_interaction_response(&ctx.http, |i| {
-                        let msg = "Sorry, your order was not found, please check the \
+            else {
+                m.create_interaction_response(&ctx.http, |i| {
+                    let msg = "Sorry, your order was not found, please check the \
                             order number and that it is for your current year's membership";
-                        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                            .interaction_response_data(|d| d.content(msg).ephemeral(true))
-                    })
-                    .await?;
-                    return Ok(());
-                }
+                    i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|d| d.content(msg).ephemeral(true))
+                })
+                .await?;
+                return Ok(());
             };
             if crate::db::insert_member(
                 &data.db,
@@ -171,13 +168,11 @@ pub(crate) async fn membership_3(
                 data.au_ch_id
                     .send_message(&ctx.http, |cm| {
                         cm.add_embed(|e| {
-                            e.thumbnail(m.user.avatar_url().unwrap_or(
-                                "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
-                            ))
-                            .title("Member verified via membership")
-                            .description(&m.user)
-                            .field("Fresher", fresher, true)
-                            .timestamp(serenity::Timestamp::now())
+                            e.thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                                .title("Member verified via membership")
+                                .description(&m.user)
+                                .field("Fresher", fresher, true)
+                                .timestamp(serenity::Timestamp::now())
                         })
                     })
                     .await?;

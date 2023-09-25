@@ -10,6 +10,8 @@ pub(crate) use membership::*;
 pub(crate) mod manual;
 pub(crate) use manual::*;
 
+const AVATAR: &str = "https://cdn.discordapp.com/embed/avatars/0.png";
+
 const INFO_MSG: &str = indoc::indoc! {"
     Nano is a Discord bot written with serenity-rs/poise and tokio-rs/axum.
 
@@ -72,7 +74,7 @@ pub(crate) async fn start(
                         .ephemeral(true)
                 })
         })
-        .await?
+        .await?;
     } else {
         m.create_interaction_response(&ctx.http, |i| {
             i.kind(if init {
@@ -105,7 +107,7 @@ pub(crate) async fn start(
                 })
             })
         })
-        .await?
+        .await?;
     };
     Ok(())
 }

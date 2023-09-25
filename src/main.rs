@@ -97,19 +97,16 @@ async fn poise(
         .into();
 
     // Build Axum Router
-    use axum::routing::{get, post};
-    let router = axum::Router::new()
-        .route("/", get(routes::hello_world))
-        .route(
-            "/verify",
-            post({
-                let pool = pool.clone();
-                let key = secret_store
-                    .get("VERIFY_KEY")
-                    .context("VERIFY_KEY not found")?;
-                move |body| routes::verify(pool, body, key)
-            }),
-        );
+    let router = axum::Router::new().route(
+        "/verify",
+        axum::routing::post({
+            let pool = pool.clone();
+            let key = secret_store
+                .get("VERIFY_KEY")
+                .context("VERIFY_KEY not found")?;
+            move |body| routes::verify(pool, body, key)
+        }),
+    );
 
     // Build Poise Instance
     let discord = poise::Framework::builder()
@@ -172,7 +169,7 @@ async fn event_handler(
 ) -> Result<(), Error> {
     match event {
         poise::Event::GuildMemberAddition { new_member } => {
-            println!("Member joined:\n{:#?}", new_member)
+            println!("Member joined:\n{new_member:#?}");
         }
         poise::Event::InteractionCreate {
             interaction: serenity::Interaction::MessageComponent(m),

@@ -66,7 +66,7 @@ pub(crate) async fn login_2(
                             .ephemeral(true)
                     })
             })
-            .await?
+            .await?;
         }
         Ok(None) => {
             m.create_interaction_response(&ctx.http, |i| {
@@ -76,7 +76,7 @@ pub(crate) async fn login_2(
                             .ephemeral(true)
                     })
             })
-            .await?
+            .await?;
         }
         Ok(Some(_)) => {
             m.create_interaction_response(&ctx.http, |i| {
@@ -99,7 +99,7 @@ pub(crate) async fn login_2(
                         })
                     })
             })
-            .await?
+            .await?;
         }
     };
     Ok(())
@@ -245,9 +245,9 @@ pub(crate) async fn login_6(
                     data.au_ch_id
                         .send_message(&ctx.http, |cm| {
                             cm.add_embed(|e| {
-                                e.thumbnail(m.user.avatar_url().unwrap_or(
-                                    "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
-                                ))
+                                e.thumbnail(
+                                    m.user.avatar_url().unwrap_or(super::AVATAR.to_string()),
+                                )
                                 .title("Member verified via login")
                                 .description(&m.user)
                                 .field("Fresher", fresher, true)
@@ -279,12 +279,12 @@ pub(crate) async fn login_6(
                                     .ephemeral(true)
                             })
                     })
-                    .await?
+                    .await?;
                 }
             }
         }
         Err(e) => {
-            eprintln!("Error: {e}")
+            eprintln!("Error: {e}");
         }
     };
     Ok(())

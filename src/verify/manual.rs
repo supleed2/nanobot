@@ -125,9 +125,7 @@ pub(crate) async fn manual_3(
                 .send_message(&ctx.http, |cm| {
                     cm.add_embed(|e| {
                         e.title("New verification request from")
-                            .thumbnail(m.user.avatar_url().unwrap_or(
-                                "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
-                            ))
+                            .thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
                             .description(&m.user)
                             .field("Real Name (To be checked)", &realname, true)
                             .field("Imperial Shortcode (To be checked", &shortcode, true)
@@ -206,12 +204,7 @@ pub(crate) async fn manual_4(
     data: &Data,
     id: &str,
 ) -> Result<(), Error> {
-    let verify = match id.chars().nth(7) {
-        Some('y') => true,
-        Some('n') => false,
-        _ => false,
-    };
-
+    let verify = matches!(id.chars().nth(7), Some('y'));
     let user = id
         .chars()
         .skip(9)
@@ -246,13 +239,11 @@ pub(crate) async fn manual_4(
                     i.kind(serenity::InteractionResponseType::UpdateMessage)
                         .interaction_response_data(|d| {
                             d.components(|c| c).embed(|e| {
-                                e.thumbnail(user.avatar_url().unwrap_or(
-                                    "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
-                                ))
-                                .title("Member verified via manual")
-                                .description(&user)
-                                .field("Fresher", fresher, true)
-                                .timestamp(serenity::Timestamp::now())
+                                e.thumbnail(user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                                    .title("Member verified via manual")
+                                    .description(&user)
+                                    .field("Fresher", fresher, true)
+                                    .timestamp(serenity::Timestamp::now())
                             })
                         })
                 })
@@ -280,7 +271,7 @@ pub(crate) async fn manual_4(
                             d.content(format!("Failed to add user {user} to member database"))
                         })
                 })
-                .await?
+                .await?;
             }
         }
     } else {
@@ -292,14 +283,12 @@ pub(crate) async fn manual_4(
                     d.components(|c| c).embed(|e| {
                         e.title("Member denied via manual")
                             .description(&user)
-                            .thumbnail(user.avatar_url().unwrap_or(
-                                "https://cdn.discordapp.com/embed/avatars/0.png".to_string(),
-                            ))
+                            .thumbnail(user.avatar_url().unwrap_or(super::AVATAR.to_string()))
                             .timestamp(serenity::Timestamp::now())
                     })
                 })
         })
-        .await?
+        .await?;
     }
 
     Ok(())

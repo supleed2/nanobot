@@ -1,10 +1,6 @@
 use crate::PendingMember;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 
-pub(crate) async fn hello_world() -> impl IntoResponse {
-    (StatusCode::OK, "Hello world!")
-}
-
 #[derive(serde::Deserialize, serde::Serialize)]
 pub(crate) struct Verify {
     id: String,
@@ -22,12 +18,10 @@ pub(crate) async fn verify(
         None => (StatusCode::BAD_REQUEST, "Invalid request body").into_response(),
         Some(Json(verify)) => {
             if verify.key == key {
-                let id = match verify.id.parse::<i64>() {
-                    Ok(i) => i,
-                    Err(_) => {
-                        return (StatusCode::BAD_REQUEST, "Invalid request body").into_response();
-                    }
+                let Ok(id) = verify.id.parse::<i64>() else {
+                    return (StatusCode::BAD_REQUEST, "Invalid request body").into_response();
                 };
+
                 // Delete from pending if exists
                 let _ = crate::db::delete_pending_by_id(&pool, id).await;
 
