@@ -120,8 +120,22 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(Confirm { confirm }) = Confirm::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let members = db::get_all_members(&ctx.data().db).await?;
-            ctx.say(format!("Members db output:\n```rust\n{members:#?}\n```"))
-                .await?;
+            match tokio::fs::write("members.rs", format!("{members:#?}")).await {
+                Ok(()) => {
+                    ctx.say("Sending members db data in followup message")
+                        .await?;
+                    ctx.channel_id()
+                        .send_files(&ctx.http(), vec!["members.rs"], |cm| {
+                            cm.content("File: members db")
+                        })
+                        .await?;
+                }
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ctx.say("Failed to create members db file").await?;
+                }
+            }
+            let _ = tokio::fs::remove_file("members.rs").await;
             Ok(())
         } else {
             ctx.say("Skipping members db output").await?;
@@ -342,8 +356,22 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(ConfirmPending { confirm }) = ConfirmPending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let pending = db::get_all_pending(&ctx.data().db).await?;
-            ctx.say(format!("Pending db output:\n```rust\n{pending:#?}\n```"))
-                .await?;
+            match tokio::fs::write("pending.rs", format!("{pending:#?}")).await {
+                Ok(()) => {
+                    ctx.say("Sending pending db data in followup message")
+                        .await?;
+                    ctx.channel_id()
+                        .send_files(&ctx.http(), vec!["pending.rs"], |cm| {
+                            cm.content("File: pending db")
+                        })
+                        .await?;
+                }
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ctx.say("Failed to create pending db file").await?;
+                }
+            }
+            let _ = tokio::fs::remove_file("pending.rs").await;
             Ok(())
         } else {
             ctx.say("Skipping pending db output").await?;
@@ -461,8 +489,22 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(ConfirmManual { confirm }) = ConfirmManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let manual = db::get_all_manual(&ctx.data().db).await?;
-            ctx.say(format!("Manual db output:\n```rust\n{manual:#?}\n```"))
-                .await?;
+            match tokio::fs::write("manual.rs", format!("{manual:#?}")).await {
+                Ok(()) => {
+                    ctx.say("Sending manual db data in followup message")
+                        .await?;
+                    ctx.channel_id()
+                        .send_files(&ctx.http(), vec!["manual.rs"], |cm| {
+                            cm.content("File: manual db")
+                        })
+                        .await?;
+                }
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ctx.say("Failed to create manual db file").await?;
+                }
+            }
+            let _ = tokio::fs::remove_file("manual.rs").await;
             Ok(())
         } else {
             ctx.say("Skipping manual db output").await?;
