@@ -136,6 +136,7 @@ async fn poise(
                 cmds::get_manual(),
                 cmds::add_manual(),
                 cmds::delete_all_manual(),
+                cmds::whois(),
             ],
             event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
             ..Default::default()
@@ -160,7 +161,7 @@ async fn poise(
         });
 
     // Return NanoBot
-    Ok(service::NanoBot { router, discord })
+    Ok(service::NanoBot { discord, router })
 }
 
 async fn event_handler(
@@ -199,7 +200,7 @@ async fn event_handler(
                 id if id.starts_with("verify-") => verify::manual_4(ctx, m, data, id).await?,
                 _ => {
                     println!("Unknown interaction, printing:\n{m:#?}");
-                    verify::unknown(ctx, m).await?
+                    verify::unknown(ctx, m).await?;
                 }
             }
         }

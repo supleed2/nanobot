@@ -549,3 +549,68 @@ pub(crate) async fn delete_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
         Ok(())
     }
 }
+
+/// Unreachable, used to create whois command folder
+#[poise::command(
+    slash_command,
+    subcommands("whois_by_id", "whois_by_nickname", "whois_by_realname")
+)]
+pub(crate) async fn whois(_ctx: ACtx<'_>) -> Result<(), Error> {
+    unreachable!()
+}
+
+/// (Public) Get member info by Discord ID
+#[poise::command(slash_command, rename = "id")]
+pub(crate) async fn whois_by_id(ctx: ACtx<'_>, id: serenity::User) -> Result<(), Error> {
+    println!("Cmd: ({}) whois_by_id {id}", ctx.author().name);
+    match db::get_member_by_id(&ctx.data().db, id.id.into()).await? {
+        Some(m) => {
+            ctx.send(|c| c.content(format!("{id}: {}", m.nickname)).ephemeral(true))
+                .await?
+        }
+        None => ctx.say(format!("No member entry found for {id}")).await?,
+    };
+    Ok(())
+}
+
+/// (Public) Get member info by Nickname (Exact)
+#[poise::command(slash_command, rename = "nick")]
+pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result<(), Error> {
+    println!("Cmd: ({}) whois_by_nickname {nickname}", ctx.author().name);
+    // TODO: fuzzy finding
+    match db::get_member_by_nickname(&ctx.data().db, &nickname).await? {
+        Some(m) => {
+            ctx.send(|c| {
+                c.content(format!("{nickname}: <@{}>", m.discord_id))
+                    .ephemeral(true)
+            })
+            .await?
+        }
+        None => {
+            ctx.say(format!("No member entry found for nickname {nickname}",))
+                .await?
+        }
+    };
+    Ok(())
+}
+
+/// (Public) Get member info by Real Name (Exact)
+#[poise::command(slash_command, rename = "name")]
+pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result<(), Error> {
+    println!("Cmd: ({}) whois_by_realname {realname}", ctx.author().name);
+    // TODO: fuzzy finding
+    match db::get_member_by_realname(&ctx.data().db, &realname).await? {
+        Some(m) => {
+            ctx.send(|c| {
+                c.content(format!("{realname}: <@{}>", m.discord_id))
+                    .ephemeral(true)
+            })
+            .await?
+        }
+        None => {
+            ctx.say(format!("No member entry found for realname {realname}",))
+                .await?
+        }
+    };
+    Ok(())
+}
