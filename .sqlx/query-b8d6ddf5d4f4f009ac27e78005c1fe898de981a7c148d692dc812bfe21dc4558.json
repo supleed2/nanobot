@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select * from members where similarity(nickname,$1) > 0.3 order by similarity(nickname,$1) desc limit $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "realname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "fresher",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "b8d6ddf5d4f4f009ac27e78005c1fe898de981a7c148d692dc812bfe21dc4558"
+}

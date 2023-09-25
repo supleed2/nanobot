@@ -64,6 +64,22 @@ pub(crate) async fn get_member_by_nickname(
     .await?)
 }
 
+/// Get member entry by Nickname (Fuzzy)
+pub(crate) async fn get_member_by_nickname_fuzzy(
+    pool: &sqlx::PgPool,
+    nickname: &str,
+    limit: i64,
+) -> Result<Vec<Member>, Error> {
+    Ok(sqlx::query_as!(
+        Member,
+        "select * from members where similarity(nickname,$1) > 0.3 order by similarity(nickname,$1) desc limit $2",
+        nickname,
+        limit,
+    )
+    .fetch_all(pool)
+    .await?)
+}
+
 /// Get member entry by Real Name
 pub(crate) async fn get_member_by_realname(
     pool: &sqlx::PgPool,
@@ -75,6 +91,22 @@ pub(crate) async fn get_member_by_realname(
         realname
     )
     .fetch_optional(pool)
+    .await?)
+}
+
+/// Get member entry by Real Name (Fuzzy)
+pub(crate) async fn get_member_by_realname_fuzzy(
+    pool: &sqlx::PgPool,
+    realname: &str,
+    limit: i64,
+) -> Result<Vec<Member>, Error> {
+    Ok(sqlx::query_as!(
+        Member,
+        "select * from members where similarity(realname,$1) > 0.3 order by similarity(realname,$1) desc limit $2",
+        realname,
+        limit,
+    )
+    .fetch_all(pool)
     .await?)
 }
 

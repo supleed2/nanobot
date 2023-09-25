@@ -572,20 +572,36 @@ pub(crate) async fn whois_by_id(ctx: ACtx<'_>, id: serenity::User) -> Result<(),
 #[poise::command(slash_command, rename = "nick")]
 pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result<(), Error> {
     println!("Cmd: ({}) whois_by_nickname {nickname}", ctx.author().name);
-    // TODO: fuzzy finding
     match db::get_member_by_nickname(&ctx.data().db, &nickname).await? {
         Some(m) => {
             ctx.send(|c| {
                 c.content(format!("{nickname}: <@{}>", m.discord_id))
                     .ephemeral(true)
             })
-            .await?
+            .await?;
         }
         None => {
-            ctx.say(format!("No member entry found for nickname {nickname}",))
-                .await?
+            let members = db::get_member_by_nickname_fuzzy(&ctx.data().db, &nickname, 3).await?;
+            if members.is_empty() {
+                ctx.send(|c| {
+                    c.content(format!("No member entry found for nickname {nickname}"))
+                        .ephemeral(true)
+                })
+                .await?;
+            } else {
+                ctx.send(|c| {
+                    c.ephemeral(true).content(format!(
+                        "Possible matches for {nickname}: {}",
+                        members
+                            .iter()
+                            .map(|m| format!(" <@{}>", m.discord_id))
+                            .collect::<String>()
+                    ))
+                })
+                .await?;
+            }
         }
-    };
+    }
     Ok(())
 }
 
@@ -593,18 +609,34 @@ pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result
 #[poise::command(slash_command, rename = "name")]
 pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result<(), Error> {
     println!("Cmd: ({}) whois_by_realname {realname}", ctx.author().name);
-    // TODO: fuzzy finding
     match db::get_member_by_realname(&ctx.data().db, &realname).await? {
         Some(m) => {
             ctx.send(|c| {
                 c.content(format!("{realname}: <@{}>", m.discord_id))
                     .ephemeral(true)
             })
-            .await?
+            .await?;
         }
         None => {
-            ctx.say(format!("No member entry found for realname {realname}",))
-                .await?
+            let members = db::get_member_by_realname_fuzzy(&ctx.data().db, &realname, 3).await?;
+            if members.is_empty() {
+                ctx.send(|c| {
+                    c.content(format!("No member entry found for realname {realname}"))
+                        .ephemeral(true)
+                })
+                .await?;
+            } else {
+                ctx.send(|c| {
+                    c.ephemeral(true).content(format!(
+                        "Possible matches for {realname}: {}",
+                        members
+                            .iter()
+                            .map(|m| format!(" <@{}>", m.discord_id))
+                            .collect::<String>()
+                    ))
+                })
+                .await?;
+            }
         }
     };
     Ok(())
