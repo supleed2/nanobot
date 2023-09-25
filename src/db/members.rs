@@ -55,11 +55,13 @@ pub(crate) async fn get_member_by_nickname(
     pool: &sqlx::PgPool,
     nickname: &str,
 ) -> Result<Option<Member>, Error> {
-    Ok(
-        sqlx::query_as!(Member, "select * from members where nickname=$1", nickname)
-            .fetch_optional(pool)
-            .await?,
+    Ok(sqlx::query_as!(
+        Member,
+        "select * from members where lower(nickname)=lower($1)",
+        nickname
     )
+    .fetch_optional(pool)
+    .await?)
 }
 
 /// Get member entry by Real Name
@@ -67,11 +69,13 @@ pub(crate) async fn get_member_by_realname(
     pool: &sqlx::PgPool,
     realname: &str,
 ) -> Result<Option<Member>, Error> {
-    Ok(
-        sqlx::query_as!(Member, "select * from members where realname=$1", realname)
-            .fetch_optional(pool)
-            .await?,
+    Ok(sqlx::query_as!(
+        Member,
+        "select * from members where lower(realname)=lower($1)",
+        realname
     )
+    .fetch_optional(pool)
+    .await?)
 }
 
 /// Add member entry to members table

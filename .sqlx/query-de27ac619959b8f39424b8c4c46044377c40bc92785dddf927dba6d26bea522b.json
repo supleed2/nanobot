@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select * from members where nickname=$1",
+  "query": "select * from members where lower(realname)=lower($1)",
   "describe": {
     "columns": [
       {
@@ -42,5 +42,5 @@
       false
     ]
   },
-  "hash": "87fdce1d94c71a23196d11d87fbc748cb4c9ef59333f546da68b52322bd104c2"
+  "hash": "de27ac619959b8f39424b8c4c46044377c40bc92785dddf927dba6d26bea522b"
 }
