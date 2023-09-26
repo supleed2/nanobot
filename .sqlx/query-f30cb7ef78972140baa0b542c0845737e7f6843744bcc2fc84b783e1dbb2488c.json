@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update members set nickname=$2 where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f30cb7ef78972140baa0b542c0845737e7f6843744bcc2fc84b783e1dbb2488c"
+}

@@ -317,6 +317,96 @@ pub(crate) async fn insert_member_from_manual(
     Ok(())
 }
 
+/// Unreachable, used to create edit_member command folder
+#[poise::command(
+    slash_command,
+    subcommands(
+        "edit_member_shortcode",
+        "edit_member_nickname",
+        "edit_member_realname",
+        "edit_member_fresher",
+    )
+)]
+pub(crate) async fn edit_member(_ctx: ACtx<'_>) -> Result<(), Error> {
+    unreachable!()
+}
+
+/// Edit member Shortcode
+#[poise::command(slash_command, rename = "shortcode")]
+pub(crate) async fn edit_member_shortcode(
+    ctx: ACtx<'_>,
+    id: serenity::Member,
+    shortcode: String,
+) -> Result<(), Error> {
+    println!(
+        "Cmd: ({}) edit_member_shortcode {shortcode}",
+        ctx.author().name
+    );
+    if db::edit_member_shortcode(&ctx.data().db, id.user.id.into(), &shortcode).await? {
+        ctx.say(format!("{id} Shortcode updated to {shortcode}"))
+            .await?;
+    } else {
+        ctx.say(format!("Failed to update Shortcode for {id}"))
+            .await?;
+    }
+    Ok(())
+}
+
+/// Edit member Nickname
+#[poise::command(slash_command, rename = "nick")]
+pub(crate) async fn edit_member_nickname(
+    ctx: ACtx<'_>,
+    id: serenity::Member,
+    nickname: String,
+) -> Result<(), Error> {
+    println!(
+        "Cmd: ({}) edit_member_nickname {nickname}",
+        ctx.author().name
+    );
+    if db::edit_member_nickname(&ctx.data().db, id.user.id.into(), &nickname).await? {
+        ctx.say(format!("{id} Nick updated to {nickname}")).await?;
+    } else {
+        ctx.say(format!("Failed to update Nick for {id}")).await?;
+    }
+    Ok(())
+}
+
+/// Edit member Real Name
+#[poise::command(slash_command, rename = "name")]
+pub(crate) async fn edit_member_realname(
+    ctx: ACtx<'_>,
+    id: serenity::Member,
+    realname: String,
+) -> Result<(), Error> {
+    println!(
+        "Cmd: ({}) edit_member_realname {realname}",
+        ctx.author().name
+    );
+    if db::edit_member_realname(&ctx.data().db, id.user.id.into(), &realname).await? {
+        ctx.say(format!("{id} Name updated to {realname}")).await?;
+    } else {
+        ctx.say(format!("Failed to update Name for {id}")).await?;
+    }
+    Ok(())
+}
+
+/// Edit member fresher status
+#[poise::command(slash_command, rename = "fresher")]
+pub(crate) async fn edit_member_fresher(
+    ctx: ACtx<'_>,
+    id: serenity::Member,
+    fresher: bool,
+) -> Result<(), Error> {
+    println!("Cmd: ({}) edit_member_fresher {fresher}", ctx.author().name);
+    if db::edit_member_fresher(&ctx.data().db, id.user.id.into(), fresher).await? {
+        ctx.say(format!("{id} Fresher status updated to {fresher}"))
+            .await?;
+    } else {
+        ctx.say(format!("Failed to update Fresher status for {id}"))
+            .await?;
+    }
+    Ok(())
+}
 /// Get the number of pending members in the pending table
 #[poise::command(slash_command)]
 pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {

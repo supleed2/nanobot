@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update members set fresher=$2 where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a47209085843dc7f53757d6d85566ff613de2bf6f734af92107f0a63ca1fa587"
+}

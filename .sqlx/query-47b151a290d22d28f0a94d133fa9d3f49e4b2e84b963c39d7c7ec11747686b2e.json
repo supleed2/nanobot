@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update members set shortcode=$2 where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "47b151a290d22d28f0a94d133fa9d3f49e4b2e84b963c39d7c7ec11747686b2e"
+}

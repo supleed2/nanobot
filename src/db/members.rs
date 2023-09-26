@@ -173,3 +173,71 @@ pub(crate) async fn insert_member_from_manual(pool: &sqlx::PgPool, id: i64) -> R
     .await?;
     Ok(())
 }
+
+/// Edit member shortcode field
+pub(crate) async fn edit_member_shortcode(
+    pool: &sqlx::PgPool,
+    id: i64,
+    shortcode: &str,
+) -> Result<bool, Error> {
+    let r = sqlx::query!(
+        "update members set shortcode=$2 where discord_id=$1",
+        id,
+        shortcode
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+    Ok(r == 1)
+}
+
+/// Edit member nickname field
+pub(crate) async fn edit_member_nickname(
+    pool: &sqlx::PgPool,
+    id: i64,
+    nickname: &str,
+) -> Result<bool, Error> {
+    let r = sqlx::query!(
+        "update members set nickname=$2 where discord_id=$1",
+        id,
+        nickname
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+    Ok(r == 1)
+}
+
+/// Edit member realname field
+pub(crate) async fn edit_member_realname(
+    pool: &sqlx::PgPool,
+    id: i64,
+    realname: &str,
+) -> Result<bool, Error> {
+    let r = sqlx::query!(
+        "update members set realname=$2 where discord_id=$1",
+        id,
+        realname
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+    Ok(r == 1)
+}
+
+/// Edit member fresher field
+pub(crate) async fn edit_member_fresher(
+    pool: &sqlx::PgPool,
+    id: i64,
+    fresher: bool,
+) -> Result<bool, Error> {
+    let r = sqlx::query!(
+        "update members set fresher=$2 where discord_id=$1",
+        id,
+        fresher
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+    Ok(r == 1)
+}
