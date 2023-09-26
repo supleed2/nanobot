@@ -122,6 +122,7 @@ async fn poise(
                 cmds::insert_member_from_pending(),
                 cmds::insert_member_from_manual(),
                 cmds::edit_member(),
+                cmds::set_members_non_fresher(),
                 cmds::count_pending(),
                 cmds::delete_pending(),
                 cmds::get_all_pending(),

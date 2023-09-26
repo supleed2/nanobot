@@ -407,6 +407,21 @@ pub(crate) async fn edit_member_fresher(
     }
     Ok(())
 }
+
+/// Set all members to non-freshers
+#[poise::command(slash_command)]
+pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> {
+    println!("Cmd: ({}) set_members_non_fresher", ctx.author().name);
+    let updated = db::set_members_non_fresher(&ctx.data().db).await?;
+    ctx.say(format!("{updated} updated to non-fresher, removing roles"))
+        .await?;
+    for mut m in ctx.data().server.members(ctx.http(), None, None).await? {
+        let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
+    }
+    ctx.say("Roles removed").await?;
+    Ok(())
+}
+
 /// Get the number of pending members in the pending table
 #[poise::command(slash_command)]
 pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {

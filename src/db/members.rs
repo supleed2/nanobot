@@ -241,3 +241,11 @@ pub(crate) async fn edit_member_fresher(
     .rows_affected();
     Ok(r == 1)
 }
+
+/// Set all members to non-freshers
+pub(crate) async fn set_members_non_fresher(pool: &sqlx::PgPool) -> Result<u64, Error> {
+    Ok(sqlx::query!("update members set fresher='f'")
+        .execute(pool)
+        .await?
+        .rows_affected())
+}

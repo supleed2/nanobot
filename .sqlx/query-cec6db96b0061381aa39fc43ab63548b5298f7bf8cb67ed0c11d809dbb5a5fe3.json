@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update members set fresher='f'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "cec6db96b0061381aa39fc43ab63548b5298f7bf8cb67ed0c11d809dbb5a5fe3"
+}
