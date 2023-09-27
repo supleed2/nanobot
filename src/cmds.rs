@@ -712,7 +712,13 @@ pub(crate) async fn whois_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Result<(
             ctx.send(|c| c.content(format!("{id}: {}", m.nickname)).ephemeral(true))
                 .await?
         }
-        None => ctx.say(format!("No member entry found for {id}")).await?,
+        None => {
+            ctx.send(|c| {
+                c.content(format!("No member entry found for {id}"))
+                    .ephemeral(true)
+            })
+            .await?
+        }
     };
     Ok(())
 }
