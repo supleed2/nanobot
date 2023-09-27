@@ -127,3 +127,25 @@ pub(crate) async fn remove_role(
 ) -> Result<(), Error> {
     Ok(member.remove_role(&ctx.http, role).await?)
 }
+
+pub(crate) async fn welcome_user(
+    http: impl AsRef<serenity::http::Http>,
+    channel: &serenity::ChannelId,
+    user: &serenity::User,
+    fresher: bool,
+) -> Result<(), Error> {
+    channel
+        .send_message(http, |m| {
+            m.content(format!(
+                "Welcome to ICAS {user}, if you have any questions, \
+                    feel free to ping a committee member{}!",
+                if fresher {
+                    ", and look out for other freshers in green"
+                } else {
+                    ""
+                }
+            ))
+        })
+        .await?;
+    Ok(())
+}
