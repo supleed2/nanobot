@@ -2,6 +2,7 @@ use crate::{db, ACtx, Error};
 use poise::serenity_prelude as serenity;
 
 /// Unreachable, used to create whois command folder
+#[allow(clippy::unused_async)]
 #[poise::command(
     slash_command,
     subcommands("whois_by_id", "whois_by_nickname", "whois_by_realname")

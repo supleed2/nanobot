@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 use anyhow::Context as _;
 use poise::serenity_prelude as serenity;
 
@@ -55,29 +56,7 @@ async fn poise(
     #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
 ) -> Result<service::NanoBot, shuttle_runtime::Error> {
     // Set Up Tracing Subscriber
-    use tracing_subscriber as ts;
-    use ts::prelude::*;
-    ts::registry()
-        .with(
-            ts::fmt::layer()
-                .without_time()
-                .with_filter(ts::EnvFilter::new(
-                    "info,nano=info,shuttle=trace,serenity=off",
-                )),
-        )
-        .with(
-            ts::fmt::layer()
-                .without_time()
-                .fmt_fields(ts::fmt::format::debug_fn(|w, f, v| {
-                    if f.name() == "message" {
-                        write!(w, "{v:?}")
-                    } else {
-                        write!(w, "")
-                    }
-                }))
-                .with_filter(ts::EnvFilter::new("off,serenity=info")),
-        )
-        .init();
+    init_tracing_subscriber();
     tracing::info!("Tracing Subscriber Set Up");
 
     // Run SQLx Migrations
@@ -144,32 +123,7 @@ async fn poise(
     // Build Poise Instance
     let discord = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![
-                cmds::cmds(),
-                cmds::setup(),
-                cmds::count_members(),
-                cmds::delete_member(),
-                cmds::get_all_members(),
-                cmds::get_member(),
-                cmds::add_member(),
-                cmds::insert_member_from_pending(),
-                cmds::insert_member_from_manual(),
-                cmds::edit_member(),
-                cmds::set_members_non_fresher(),
-                cmds::count_pending(),
-                cmds::delete_pending(),
-                cmds::get_all_pending(),
-                cmds::get_pending(),
-                cmds::add_pending(),
-                cmds::delete_all_pending(),
-                cmds::count_manual(),
-                cmds::delete_manual(),
-                cmds::get_all_manual(),
-                cmds::get_manual(),
-                cmds::add_manual(),
-                cmds::delete_all_manual(),
-                cmds::whois(),
-            ],
+            commands: all_commands(),
             event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
             ..Default::default()
         })
@@ -254,4 +208,59 @@ async fn event_handler(
         _ => {}
     }
     Ok(())
+}
+
+fn init_tracing_subscriber() {
+    use tracing_subscriber as ts;
+    use ts::prelude::*;
+    ts::registry()
+        .with(
+            ts::fmt::layer()
+                .without_time()
+                .with_filter(ts::EnvFilter::new(
+                    "info,nano=info,shuttle=trace,serenity=off",
+                )),
+        )
+        .with(
+            ts::fmt::layer()
+                .without_time()
+                .fmt_fields(ts::fmt::format::debug_fn(|w, f, v| {
+                    if f.name() == "message" {
+                        write!(w, "{v:?}")
+                    } else {
+                        write!(w, "")
+                    }
+                }))
+                .with_filter(ts::EnvFilter::new("off,serenity=info")),
+        )
+        .init();
+}
+
+fn all_commands() -> Vec<poise::Command<Data, Error>> {
+    vec![
+        cmds::cmds(),
+        cmds::setup(),
+        cmds::count_members(),
+        cmds::delete_member(),
+        cmds::get_all_members(),
+        cmds::get_member(),
+        cmds::add_member(),
+        cmds::insert_member_from_pending(),
+        cmds::insert_member_from_manual(),
+        cmds::edit_member(),
+        cmds::set_members_non_fresher(),
+        cmds::count_pending(),
+        cmds::delete_pending(),
+        cmds::get_all_pending(),
+        cmds::get_pending(),
+        cmds::add_pending(),
+        cmds::delete_all_pending(),
+        cmds::count_manual(),
+        cmds::delete_manual(),
+        cmds::get_all_manual(),
+        cmds::get_manual(),
+        cmds::add_manual(),
+        cmds::delete_all_manual(),
+        cmds::whois(),
+    ]
 }

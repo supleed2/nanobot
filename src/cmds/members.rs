@@ -81,6 +81,7 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Unreachable, used to create get_member command folder
+#[allow(clippy::unused_async)]
 #[poise::command(
     slash_command,
     subcommands(
