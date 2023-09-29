@@ -16,6 +16,7 @@ const MANUAL_INTRO: &str = indoc::indoc! {"
     First, are you a fresher?
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn manual_1(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -68,6 +69,7 @@ struct Manual {
     nickname: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn manual_2(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -92,6 +94,7 @@ pub(crate) async fn manual_2(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn manual_3(
     ctx: &serenity::Context,
     m: &serenity::ModalSubmitInteraction,
@@ -185,7 +188,7 @@ pub(crate) async fn manual_3(
             .await?;
             return Ok(());
         }
-        Err(e) => eprintln!("Error: {e}"),
+        Err(e) => tracing::error!("{e}"),
     };
     m.create_interaction_response(&ctx.http, |i| {
         i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
@@ -198,6 +201,7 @@ pub(crate) async fn manual_3(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn manual_4(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -225,7 +229,7 @@ pub(crate) async fn manual_4(
                     .await?
                     .unwrap()
                     .fresher;
-                println!(
+                tracing::info!(
                     "{} ({}) added via manual{}",
                     user.name,
                     user.id,
@@ -253,7 +257,7 @@ pub(crate) async fn manual_4(
                 }
             }
             Err(e) => {
-                eprintln!("Error: {e}");
+                tracing::error!("{e}");
                 m.create_interaction_response(&ctx.http, |i| {
                     i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
                         .interaction_response_data(|d| {
@@ -265,7 +269,7 @@ pub(crate) async fn manual_4(
         }
     } else {
         crate::db::delete_manual_by_id(&data.db, user.id.into()).await?;
-        println!("{} ({}) denied via manual", user.name, user.id);
+        tracing::info!("{} ({}) denied via manual", user.name, user.id);
         m.create_interaction_response(&ctx.http, |i| {
             i.kind(serenity::InteractionResponseType::UpdateMessage)
                 .interaction_response_data(|d| {

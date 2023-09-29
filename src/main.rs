@@ -101,6 +101,7 @@ async fn poise(
         .parse::<u64>()
         .expect("SERVER_ID not valid u64")
         .into();
+    tracing::info!("Secrets loaded");
 
     // Build Axum Router
     let router = axum::Router::new().route(
@@ -178,12 +179,12 @@ async fn event_handler(
 ) -> Result<(), Error> {
     match event {
         poise::Event::GuildMemberAddition { new_member } => {
-            println!("Member joined:\n{new_member:#?}");
+            tracing::info!("Member joined: {}", new_member.user.name);
         }
         poise::Event::InteractionCreate {
             interaction: serenity::Interaction::MessageComponent(m),
         } => {
-            println!("Interaction: {} by \"{}\"", m.data.custom_id, m.user.name);
+            tracing::info!("Interaction: {} by {}", m.data.custom_id, m.user.name);
             match m.data.custom_id.as_str() {
                 "register.global" | "unregister.global" | "register.guild" | "unregister.guild" => {
                 }
@@ -205,7 +206,7 @@ async fn event_handler(
                 "manual_2n" => verify::manual_2(ctx, m, data, false).await?,
                 id if id.starts_with("verify-") => verify::manual_4(ctx, m, data, id).await?,
                 _ => {
-                    println!("Unknown interaction, printing:\n{m:#?}");
+                    tracing::info!("Unknown interaction, printing:\n{m:#?}");
                     verify::unknown(ctx, m).await?;
                 }
             }
@@ -213,7 +214,7 @@ async fn event_handler(
         poise::Event::InteractionCreate {
             interaction: serenity::Interaction::ModalSubmit(m),
         } => {
-            println!("Modal submit: {} by \"{}\"", m.data.custom_id, m.user.name);
+            tracing::info!("Modal submit: {} by {}", m.data.custom_id, m.user.name);
             match m.data.custom_id.as_str() {
                 "login_6f" => verify::login_6(ctx, m, data, true).await?,
                 "login_6n" => verify::login_6(ctx, m, data, false).await?,

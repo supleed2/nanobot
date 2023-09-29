@@ -11,6 +11,7 @@ const LOGIN_INTRO: &str = indoc::indoc! {"
     You can then complete the remaining details in the next step!
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_1(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -51,6 +52,7 @@ const LOGIN_FORM: &str = indoc::indoc! {"
     The last step is a short form with some extra details
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_2(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -58,7 +60,7 @@ pub(crate) async fn login_2(
 ) -> Result<(), Error> {
     match crate::db::get_pending_by_id(&data.db, m.user.id.into()).await {
         Err(e) => {
-            eprintln!("Error in login_2: {e}");
+            tracing::error!("{e}");
             m.create_interaction_response(&ctx.http, |i| {
                 i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
                     .interaction_response_data(|d| {
@@ -105,6 +107,7 @@ pub(crate) async fn login_2(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_3(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -139,6 +142,7 @@ pub(crate) async fn login_3(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_4(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -177,6 +181,7 @@ struct Nickname {
     nickname: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_5(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -197,6 +202,7 @@ pub(crate) async fn login_5(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn login_6(
     ctx: &serenity::Context,
     m: &serenity::ModalSubmitInteraction,
@@ -217,7 +223,7 @@ pub(crate) async fn login_6(
             .await
             {
                 Ok(()) => {
-                    println!(
+                    tracing::info!(
                         "{} ({}) added via login{}",
                         m.user.name,
                         m.user.id,
@@ -261,7 +267,7 @@ pub(crate) async fn login_6(
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error: {e}");
+                    tracing::error!("Error: {e}");
                     m.create_interaction_response(&ctx.http, |i| {
                         i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
                             .interaction_response_data(|d| {
@@ -274,7 +280,7 @@ pub(crate) async fn login_6(
             }
         }
         Err(e) => {
-            eprintln!("Error: {e}");
+            tracing::error!("{e}");
         }
     };
     Ok(())

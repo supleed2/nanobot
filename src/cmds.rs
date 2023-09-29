@@ -3,14 +3,16 @@ use poise::serenity_prelude as serenity;
 use poise::Modal;
 
 /// Buttons to (de-)register application commands globally or by guild
+#[tracing::instrument(skip_all)]
 #[poise::command(prefix_command, owners_only)]
 pub(crate) async fn cmds(ctx: poise::Context<'_, Data, Error>) -> Result<(), Error> {
-    println!("Cmd: ({}) cmds", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
 }
 
 /// Send (customisable) verification introduction message in specified channel
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn setup(
     ctx: ACtx<'_>,
@@ -35,7 +37,7 @@ pub(crate) async fn setup(
         text: Option<String>,
     }
 
-    println!("Cmd: ({}) setup {}", ctx.author().name, channel.name());
+    tracing::info!("{} {}", ctx.author().name, channel.name());
 
     if let Some(Setup {
         message,
@@ -73,9 +75,10 @@ pub(crate) async fn setup(
 }
 
 /// Get the number of members in the members table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn count_members(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) count_members", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
     let count = db::count_members(&ctx.data().db).await?;
     ctx.say(format!("There are {count} entries in the members table"))
         .await?;
@@ -83,17 +86,14 @@ pub(crate) async fn count_members(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Delete member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_member(
     ctx: ACtx<'_>,
     id: serenity::Member,
     remove_roles: Option<bool>,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) delete_member {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     if db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         if remove_roles.unwrap_or(true) {
             let mut m = id.clone();
@@ -110,6 +110,7 @@ pub(crate) async fn delete_member(
 }
 
 /// Print all members in members table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
     #[derive(Modal)]
@@ -119,7 +120,7 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
         confirm: String,
     }
 
-    println!("Cmd: ({}) get_all_members", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
 
     if let Some(Confirm { confirm }) = Confirm::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -135,7 +136,7 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
                         .await?;
                 }
                 Err(e) => {
-                    eprintln!("Error: {e}");
+                    tracing::error!("{e}");
                     ctx.say("Failed to create members db file").await?;
                 }
             }
@@ -166,13 +167,10 @@ pub(crate) async fn get_member(_ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Get member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "id")]
 pub(crate) async fn get_member_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) get_member_by_id {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     match db::get_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         Some(m) => {
             ctx.say(format!("Member info for {id}:\n```rust\n{m:#?}\n```"))
@@ -184,12 +182,10 @@ pub(crate) async fn get_member_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Res
 }
 
 /// Get member info by Shortcode
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "shortcode")]
 pub(crate) async fn get_member_by_shortcode(ctx: ACtx<'_>, shortcode: String) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) get_member_by_shortcode {shortcode}",
-        ctx.author().name
-    );
+    tracing::info!("{} {shortcode}", ctx.author().name);
     match db::get_member_by_shortcode(&ctx.data().db, &shortcode).await? {
         Some(m) => {
             ctx.say(format!(
@@ -206,12 +202,10 @@ pub(crate) async fn get_member_by_shortcode(ctx: ACtx<'_>, shortcode: String) ->
 }
 
 /// Get member info by Nickname
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "nick")]
 pub(crate) async fn get_member_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) get_member_by_nickname {nickname}",
-        ctx.author().name
-    );
+    tracing::info!("{} {nickname}", ctx.author().name);
     match db::get_member_by_nickname(&ctx.data().db, &nickname).await? {
         Some(m) => {
             ctx.say(format!(
@@ -228,12 +222,10 @@ pub(crate) async fn get_member_by_nickname(ctx: ACtx<'_>, nickname: String) -> R
 }
 
 /// Get member info by Real Name
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "name")]
 pub(crate) async fn get_member_by_realname(ctx: ACtx<'_>, realname: String) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) get_member_by_realname {realname}",
-        ctx.author().name
-    );
+    tracing::info!("{} {realname}", ctx.author().name);
     match db::get_member_by_realname(&ctx.data().db, &realname).await? {
         Some(m) => {
             ctx.say(format!(
@@ -250,6 +242,7 @@ pub(crate) async fn get_member_by_realname(ctx: ACtx<'_>, realname: String) -> R
 }
 
 /// Add a member to the members table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn add_member(
     ctx: ACtx<'_>,
@@ -259,8 +252,8 @@ pub(crate) async fn add_member(
     realname: String,
     fresher: bool,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) add_member {}, {shortcode}, {realname}, {nickname}",
+    tracing::info!(
+        "{} {}, {shortcode}, {realname}, {nickname}",
         ctx.author().name,
         id.user.name,
     );
@@ -285,6 +278,7 @@ pub(crate) async fn add_member(
 }
 
 /// Manually add member to members table from pending table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn insert_member_from_pending(
     ctx: ACtx<'_>,
@@ -292,11 +286,7 @@ pub(crate) async fn insert_member_from_pending(
     nickname: String,
     fresher: bool,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) insert_member_from_pending {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     match db::insert_member_from_pending(&ctx.data().db, id.user.id.into(), &nickname, fresher)
         .await
     {
@@ -310,16 +300,13 @@ pub(crate) async fn insert_member_from_pending(
 }
 
 /// Manually add member to members table from manual table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn insert_member_from_manual(
     ctx: ACtx<'_>,
     id: serenity::Member,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) insert_member_from_manual {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     match db::insert_member_from_manual(&ctx.data().db, id.user.id.into()).await {
         Ok(()) => {
             ctx.say(format!("Member moved from manual to members table: {id}"))
@@ -345,16 +332,14 @@ pub(crate) async fn edit_member(_ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Edit member Shortcode
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "shortcode")]
 pub(crate) async fn edit_member_shortcode(
     ctx: ACtx<'_>,
     id: serenity::Member,
     shortcode: String,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) edit_member_shortcode {shortcode}",
-        ctx.author().name
-    );
+    tracing::info!("{} {shortcode}", ctx.author().name);
     if db::edit_member_shortcode(&ctx.data().db, id.user.id.into(), &shortcode).await? {
         ctx.say(format!("{id} Shortcode updated to {shortcode}"))
             .await?;
@@ -366,16 +351,14 @@ pub(crate) async fn edit_member_shortcode(
 }
 
 /// Edit member Nickname
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "nick")]
 pub(crate) async fn edit_member_nickname(
     ctx: ACtx<'_>,
     id: serenity::Member,
     nickname: String,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) edit_member_nickname {nickname}",
-        ctx.author().name
-    );
+    tracing::info!("{} {nickname}", ctx.author().name);
     if db::edit_member_nickname(&ctx.data().db, id.user.id.into(), &nickname).await? {
         ctx.say(format!("{id} Nick updated to {nickname}")).await?;
     } else {
@@ -385,16 +368,14 @@ pub(crate) async fn edit_member_nickname(
 }
 
 /// Edit member Real Name
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "name")]
 pub(crate) async fn edit_member_realname(
     ctx: ACtx<'_>,
     id: serenity::Member,
     realname: String,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) edit_member_realname {realname}",
-        ctx.author().name
-    );
+    tracing::info!("{} {realname}", ctx.author().name);
     if db::edit_member_realname(&ctx.data().db, id.user.id.into(), &realname).await? {
         ctx.say(format!("{id} Name updated to {realname}")).await?;
     } else {
@@ -404,17 +385,14 @@ pub(crate) async fn edit_member_realname(
 }
 
 /// Edit member fresher status
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "fresher")]
 pub(crate) async fn edit_member_fresher(
     ctx: ACtx<'_>,
     id: serenity::Member,
     fresher: bool,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) edit_member_fresher {} {fresher}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {} {fresher}", ctx.author().name, id.user.name,);
     if db::edit_member_fresher(&ctx.data().db, id.user.id.into(), fresher).await? {
         ctx.say(format!("{id} Fresher status updated to {fresher}"))
             .await?;
@@ -426,9 +404,10 @@ pub(crate) async fn edit_member_fresher(
 }
 
 /// Set all members to non-freshers
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) set_members_non_fresher", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
     let updated = db::set_members_non_fresher(&ctx.data().db).await?;
     ctx.say(format!("{updated} updated to non-fresher, removing roles"))
         .await?;
@@ -440,9 +419,10 @@ pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> 
 }
 
 /// Get the number of pending members in the pending table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) count_pending", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
     let count = db::count_pending(&ctx.data().db).await?;
     ctx.say(format!("There are {count} entries in the pending table"))
         .await?;
@@ -450,13 +430,10 @@ pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Delete pending member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) delete_pending {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     if db::delete_pending_by_id(&ctx.data().db, id.user.id.into()).await? {
         ctx.say(format!("Successfully deleted pending member info for {id}"))
             .await?
@@ -468,6 +445,7 @@ pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::Member) -> Resul
 }
 
 /// Print all pending members in pending table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
     #[derive(Modal)]
@@ -477,7 +455,7 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
         confirm: String,
     }
 
-    println!("Cmd: ({}) get_all_pending", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
 
     if let Some(ConfirmPending { confirm }) = ConfirmPending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -493,7 +471,7 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
                         .await?;
                 }
                 Err(e) => {
-                    eprintln!("Error: {e}");
+                    tracing::error!("{e}");
                     ctx.say("Failed to create pending db file").await?;
                 }
             }
@@ -510,9 +488,10 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Get pending member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn get_pending(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!("Cmd: ({}) get_pending {}", ctx.author().name, id.user.name);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::get_pending_by_id(&ctx.data().db, id.user.id.into()).await? {
         Some(p) => {
             ctx.say(format!("Pending info for {id}:\n```rust\n{p:#?}\n```"))
@@ -524,6 +503,7 @@ pub(crate) async fn get_pending(ctx: ACtx<'_>, id: serenity::Member) -> Result<(
 }
 
 /// Manually add pending member to pending table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn add_pending(
     ctx: ACtx<'_>,
@@ -531,8 +511,8 @@ pub(crate) async fn add_pending(
     shortcode: String,
     realname: String,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) add_pending {}, {shortcode}, {realname}",
+    tracing::info!(
+        "{} {}, {shortcode}, {realname}",
         ctx.author().name,
         id.user.name,
     );
@@ -550,6 +530,7 @@ pub(crate) async fn add_pending(
 }
 
 /// Delete all pending members in pending table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
     #[derive(Modal)]
@@ -559,7 +540,7 @@ pub(crate) async fn delete_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
         confirm: String,
     }
 
-    println!("Cmd: ({}) delete_all_pending", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
 
     if let Some(ConfirmPurgePending { confirm }) = ConfirmPurgePending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -578,9 +559,10 @@ pub(crate) async fn delete_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Get the number of manual members in the manual table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn count_manual(ctx: ACtx<'_>) -> Result<(), Error> {
-    println!("Cmd: ({}) count_manual", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
     let count = db::count_manual(&ctx.data().db).await?;
     ctx.say(format!("There are {count} entries in the manual table"))
         .await?;
@@ -588,13 +570,10 @@ pub(crate) async fn count_manual(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Delete manual member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_manual(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) delete_manual {}",
-        ctx.author().name,
-        id.user.name,
-    );
+    tracing::info!("{} {}", ctx.author().name, id.user.name,);
     if db::delete_manual_by_id(&ctx.data().db, id.user.id.into()).await? {
         ctx.say(format!("Successfully deleted manual member info for {id}"))
             .await?
@@ -606,6 +585,7 @@ pub(crate) async fn delete_manual(ctx: ACtx<'_>, id: serenity::Member) -> Result
 }
 
 /// Print all manual members in manual table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
     #[derive(Modal)]
@@ -615,7 +595,7 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
         confirm: String,
     }
 
-    println!("Cmd: ({}) get_all_manual", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
 
     if let Some(ConfirmManual { confirm }) = ConfirmManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -631,7 +611,7 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
                         .await?;
                 }
                 Err(e) => {
-                    eprintln!("Error: {e}");
+                    tracing::error!("{e}");
                     ctx.say("Failed to create manual db file").await?;
                 }
             }
@@ -648,9 +628,10 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// Get manual member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn get_manual(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!("Cmd: ({}) get_manual {}", ctx.author().name, id.user.name);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::get_manual_by_id(&ctx.data().db, id.user.id.into()).await? {
         Some(m) => {
             ctx.say(format!("Manual info for {id}:\n```rust\n{m:#?}\n```"))
@@ -662,6 +643,7 @@ pub(crate) async fn get_manual(ctx: ACtx<'_>, id: serenity::Member) -> Result<()
 }
 
 /// Manually add manual member to manual table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn add_manual(
     ctx: ACtx<'_>,
@@ -671,8 +653,8 @@ pub(crate) async fn add_manual(
     realname: String,
     fresher: bool,
 ) -> Result<(), Error> {
-    println!(
-        "Cmd: ({}) add_manual {}, {shortcode}, {realname}, {nickname}",
+    tracing::info!(
+        "{} {}, {shortcode}, {realname}, {nickname}",
         ctx.author().name,
         id.user.name,
     );
@@ -692,6 +674,7 @@ pub(crate) async fn add_manual(
 }
 
 /// Delete all manual members in manual table
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
     #[derive(Modal)]
@@ -701,7 +684,7 @@ pub(crate) async fn delete_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
         confirm: String,
     }
 
-    println!("Cmd: ({}) delete_all_manual", ctx.author().name);
+    tracing::info!("{}", ctx.author().name);
 
     if let Some(ConfirmPurgeManual { confirm }) = ConfirmPurgeManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
@@ -729,9 +712,10 @@ pub(crate) async fn whois(_ctx: ACtx<'_>) -> Result<(), Error> {
 }
 
 /// (Public) Get member info by Discord ID
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "id")]
 pub(crate) async fn whois_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    println!("Cmd: ({}) whois_by_id {}", ctx.author().name, id.user.name);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::get_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         Some(m) => {
             ctx.send(|c| c.content(format!("{id}: {}", m.nickname)).ephemeral(true))
@@ -749,9 +733,10 @@ pub(crate) async fn whois_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Result<(
 }
 
 /// (Public) Get member info by Nickname (Exact)
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "nick")]
 pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result<(), Error> {
-    println!("Cmd: ({}) whois_by_nickname {nickname}", ctx.author().name);
+    tracing::info!("{} {nickname}", ctx.author().name);
     if let Some(m) = db::get_member_by_nickname(&ctx.data().db, &nickname).await? {
         ctx.send(|c| {
             c.content(format!("{nickname}: <@{}>", m.discord_id))
@@ -783,9 +768,10 @@ pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result
 }
 
 /// (Public) Get member info by Real Name (Exact)
+#[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "name")]
 pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result<(), Error> {
-    println!("Cmd: ({}) whois_by_realname {realname}", ctx.author().name);
+    tracing::info!("{} {realname}", ctx.author().name);
     if let Some(m) = db::get_member_by_realname(&ctx.data().db, &realname).await? {
         ctx.send(|c| {
             c.content(format!("{realname}: <@{}>", m.discord_id))

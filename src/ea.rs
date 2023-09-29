@@ -7,6 +7,7 @@ pub struct Member {
     pub order_no: usize,
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn get_members_list(
     api_key: &str,
     url: &str,

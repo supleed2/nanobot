@@ -9,6 +9,7 @@ pub(crate) struct Verify {
     key: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn verify(
     pool: sqlx::PgPool,
     payload: Option<Json<Verify>>,
@@ -36,7 +37,12 @@ pub(crate) async fn verify(
                 .await
                 {
                     Ok(_) => {
-                        println!("ID {} added: {}, {}", id, verify.shortcode, verify.fullname);
+                        tracing::info!(
+                            "ID {} added: {}, {}",
+                            id,
+                            verify.shortcode,
+                            verify.fullname
+                        );
                         (StatusCode::OK, "Member added to `pending` database").into_response()
                     }
                     Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")).into_response(),

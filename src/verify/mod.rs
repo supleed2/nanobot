@@ -20,6 +20,7 @@ const INFO_MSG: &str = indoc::indoc! {"
     If you have any questions, feel free to ping or message <@99217900254035968>
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn info(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -32,6 +33,7 @@ pub(crate) async fn info(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn unknown(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -54,6 +56,7 @@ const START_MSG: &str = indoc::indoc! {"
     - 🚗 Manual verification, eg. using College ID Card or Acceptance Letter
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn start(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -112,6 +115,7 @@ pub(crate) async fn start(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn apply_role(
     ctx: &serenity::Context,
     member: &mut serenity::Member,
@@ -120,6 +124,7 @@ pub(crate) async fn apply_role(
     Ok(member.add_role(&ctx.http, role).await?)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn remove_role(
     ctx: &serenity::Context,
     member: &mut serenity::Member,
@@ -128,6 +133,7 @@ pub(crate) async fn remove_role(
     Ok(member.remove_role(&ctx.http, role).await?)
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn welcome_user(
     http: impl AsRef<serenity::http::Http>,
     channel: &serenity::ChannelId,

@@ -12,6 +12,7 @@ const MEMBERSHIP_INTRO: &str = indoc::indoc! {"
     First, are you a fresher?
 "};
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn membership_1(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -60,6 +61,7 @@ struct Membership {
     nickname: String,
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn membership_2(
     ctx: &serenity::Context,
     m: &serenity::MessageComponentInteraction,
@@ -87,6 +89,7 @@ pub(crate) async fn membership_2(
     Ok(())
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) async fn membership_3(
     ctx: &serenity::Context,
     m: &serenity::ModalSubmitInteraction,
@@ -102,7 +105,7 @@ pub(crate) async fn membership_3(
             let members = match crate::ea::get_members_list(&data.ea_key, &data.ea_url).await {
                 Ok(v) => v,
                 Err(e) => {
-                    eprintln!("Error: {e}");
+                    tracing::error!("{e}");
                     m.create_interaction_response(&ctx.http, |i| {
                         i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
                             .interaction_response_data(|d| {
@@ -140,7 +143,7 @@ pub(crate) async fn membership_3(
             .await
             .is_ok()
             {
-                println!(
+                tracing::info!(
                     "{} ({}) added via membership{}",
                     m.user.name,
                     m.user.id,
@@ -183,7 +186,7 @@ pub(crate) async fn membership_3(
                 return Ok(());
             }
         }
-        Err(e) => eprintln!("Error: {e}"),
+        Err(e) => tracing::error!("{e}"),
     };
     m.create_interaction_response(&ctx.http, |i| {
         i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
