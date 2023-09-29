@@ -58,11 +58,24 @@ async fn poise(
     use tracing_subscriber as ts;
     use ts::prelude::*;
     ts::registry()
-        .with(ts::fmt::layer().without_time())
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                tracing_subscriber::EnvFilter::new("info,nano=info,shuttle=trace,serenity=warn")
-            }),
+            ts::fmt::layer()
+                .without_time()
+                .with_filter(ts::EnvFilter::new(
+                    "info,nano=info,shuttle=trace,serenity=off",
+                )),
+        )
+        .with(
+            ts::fmt::layer()
+                .without_time()
+                .fmt_fields(ts::fmt::format::debug_fn(|w, f, v| {
+                    if f.name() == "message" {
+                        write!(w, "{v:?}")
+                    } else {
+                        write!(w, "")
+                    }
+                }))
+                .with_filter(ts::EnvFilter::new("off,serenity=info")),
         )
         .init();
     tracing::info!("Tracing Subscriber Set Up");
