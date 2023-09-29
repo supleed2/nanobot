@@ -54,6 +54,19 @@ async fn poise(
     #[shuttle_secrets::Secrets] secret_store: shuttle_secrets::SecretStore,
     #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
 ) -> Result<service::NanoBot, shuttle_runtime::Error> {
+    // Set Up Tracing Subscriber
+    use tracing_subscriber as ts;
+    use ts::prelude::*;
+    ts::registry()
+        .with(ts::fmt::layer().without_time())
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                tracing_subscriber::EnvFilter::new("info,nano=info,shuttle=trace,serenity=warn")
+            }),
+        )
+        .init();
+    tracing::info!("Tracing Subscriber Set Up");
+
     // Run SQLx Migrations
     sqlx::migrate!()
         .run(&pool)
