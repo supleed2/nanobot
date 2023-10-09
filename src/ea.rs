@@ -3,6 +3,8 @@
 pub struct Member {
     pub first_name: String,
     pub surname: String,
+    #[serde(rename = "CID")]
+    pub cid: String,
     pub login: String,
     pub order_no: usize,
 }

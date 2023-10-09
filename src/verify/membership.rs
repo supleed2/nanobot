@@ -6,6 +6,8 @@ const MEMBERSHIP_INTRO: &str = indoc::indoc! {"
     To use automatic verification via Membership:
     - Enter your Union order number (from this academic year)
     - Enter your Imperial shortcode
+      - For Life members, your shortcode will be from when you were a student
+      - For Associate members, this is your CID, in the format `AM-12345` or similar
     - Enter your preferred name for Nano whois commands
     - Your shortcode will then be connected to your Discord Account by Nano
 
@@ -117,10 +119,10 @@ pub(crate) async fn membership_3(
                     return Ok(());
                 }
             };
-            let Some(member) = members
-                .iter()
-                .find(|&member| member.order_no.to_string() == order && member.login == shortcode)
-            else {
+            let Some(member) = members.iter().find(|member| {
+                ((member.login.is_empty() && member.cid == shortcode) || member.login == shortcode)
+                    && member.order_no.to_string() == order
+            }) else {
                 m.create_interaction_response(&ctx.http, |i| {
                     let msg = "Sorry, your order was not found, please check the \
                             order number and that it is for your current year's membership";
