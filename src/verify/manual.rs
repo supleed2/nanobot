@@ -252,7 +252,9 @@ pub(crate) async fn manual_4(
                         })
                 })
                 .await?;
-                if !member.roles.contains(&data.old_member) {
+                if member.roles.contains(&data.old_member) {
+                    crate::verify::remove_role(ctx, &mut member, data.old_member).await?;
+                } else {
                     crate::verify::welcome_user(&ctx.http, &data.gn_ch_id, &user, fresher).await?;
                 }
             }

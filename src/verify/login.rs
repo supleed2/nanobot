@@ -261,7 +261,9 @@ pub(crate) async fn login_6(
                             })
                         })
                         .await?;
-                    if !mm.roles.contains(&data.old_member) {
+                    if mm.roles.contains(&data.old_member) {
+                        crate::verify::remove_role(ctx, &mut mm, data.old_member).await?;
+                    } else {
                         crate::verify::welcome_user(&ctx.http, &data.gn_ch_id, &m.user, fresher)
                             .await?;
                     }
