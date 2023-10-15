@@ -88,6 +88,29 @@ pub(crate) async fn edit_member_fresher(
     Ok(())
 }
 
+/// Set all members with no roles to non-member
+#[tracing::instrument(skip_all)]
+#[poise::command(slash_command)]
+pub(crate) async fn refresh_non_members(ctx: ACtx<'_>) -> Result<(), Error> {
+    use serenity::futures::StreamExt;
+    tracing::info!("{}", ctx.author().name);
+    let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
+    let mut cnt = 0;
+    while let Some(Ok(mut m)) = members.next().await {
+        if m.roles.is_empty() {
+            m.add_role(ctx.http(), ctx.data().non_member).await?;
+            cnt += 1;
+        }
+    }
+    tracing::info!("{cnt} users given non-member role");
+    ctx.say(format!(
+        "{cnt} users given <@&{}> role",
+        ctx.data().non_member
+    ))
+    .await?;
+    Ok(())
+}
+
 /// Set all members to non-freshers
 #[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]

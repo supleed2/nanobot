@@ -18,6 +18,7 @@ struct Data {
     fresher: serenity::RoleId,
     gn_ch_id: serenity::ChannelId,
     member: serenity::RoleId,
+    non_member: serenity::RoleId,
     old_member: serenity::RoleId,
     server: serenity::GuildId,
 }
@@ -95,6 +96,11 @@ async fn poise(
         .expect("MEMBER_ID not found")
         .parse()
         .expect("MEMBER_ID not valid u64");
+    let non_member = secret_store
+        .get("NON_MEMBER_ID")
+        .expect("NON_MEMBER_ID not found")
+        .parse()
+        .expect("NON_MEMBER_ID not valid u64");
     let old_member = secret_store
         .get("OLD_MEMBER_ID")
         .expect("OLD_MEMBER_ID not found")
@@ -141,6 +147,7 @@ async fn poise(
                     fresher,
                     gn_ch_id,
                     member,
+                    non_member,
                     old_member,
                     server,
                 })
@@ -248,6 +255,7 @@ fn all_commands() -> Vec<poise::Command<Data, Error>> {
         cmds::insert_member_from_pending(),
         cmds::insert_member_from_manual(),
         cmds::edit_member(),
+        cmds::refresh_non_members(),
         cmds::set_members_non_fresher(),
         cmds::count_pending(),
         cmds::delete_pending(),
