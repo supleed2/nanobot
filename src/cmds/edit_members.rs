@@ -94,6 +94,7 @@ pub(crate) async fn edit_member_fresher(
 pub(crate) async fn refresh_non_members(ctx: ACtx<'_>) -> Result<(), Error> {
     use serenity::futures::StreamExt;
     tracing::info!("{}", ctx.author().name);
+    ctx.defer().await?;
     let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
     let mut cnt = 0;
     while let Some(Ok(mut m)) = members.next().await {
