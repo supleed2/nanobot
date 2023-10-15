@@ -92,11 +92,13 @@ pub(crate) async fn edit_member_fresher(
 #[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> {
+    use serenity::futures::StreamExt;
     tracing::info!("{}", ctx.author().name);
     let updated = db::set_members_non_fresher(&ctx.data().db).await?;
     ctx.say(format!("{updated} updated to non-fresher, removing roles"))
         .await?;
-    for mut m in ctx.data().server.members(ctx.http(), None, None).await? {
+    let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
+    while let Some(Ok(mut m)) = members.next().await {
         let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
     }
     ctx.say("Roles removed").await?;
