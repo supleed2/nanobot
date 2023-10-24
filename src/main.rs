@@ -115,16 +115,18 @@ async fn poise(
     tracing::info!("Secrets loaded");
 
     // Build Axum Router
-    let router = axum::Router::new().route(
-        "/verify",
-        axum::routing::post({
-            let pool = pool.clone();
-            let key = secret_store
-                .get("VERIFY_KEY")
-                .context("VERIFY_KEY not found")?;
-            move |body| routes::verify(pool, body, key)
-        }),
-    );
+    let router = axum::Router::new()
+        .route("/up", axum::routing::get(routes::up))
+        .route(
+            "/verify",
+            axum::routing::post({
+                let pool = pool.clone();
+                let key = secret_store
+                    .get("VERIFY_KEY")
+                    .context("VERIFY_KEY not found")?;
+                move |body| routes::verify(pool, body, key)
+            }),
+        );
 
     // Build Poise Instance
     let discord = poise::Framework::builder()

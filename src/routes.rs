@@ -1,7 +1,12 @@
 use crate::PendingMember;
 use axum::{http::StatusCode, response::IntoResponse, Json};
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[tracing::instrument]
+pub(crate) async fn up() -> impl IntoResponse {
+    (StatusCode::OK, "Nano is up!")
+}
+
+#[derive(serde::Deserialize)]
 pub(crate) struct Verify {
     id: String,
     shortcode: String,
