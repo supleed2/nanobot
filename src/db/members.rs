@@ -131,7 +131,7 @@ pub(crate) async fn insert_member_from_pending(
     id: i64,
     nickname: &str,
     fresher: bool,
-) -> Result<(), Error> {
+) -> Result<PendingMember, Error> {
     let p = sqlx::query_as!(
         PendingMember,
         "delete from pending where discord_id=$1 returning *",
@@ -149,11 +149,14 @@ pub(crate) async fn insert_member_from_pending(
     )
     .execute(pool)
     .await?;
-    Ok(())
+    Ok(p)
 }
 
 /// Add member entry to members table from manual table
-pub(crate) async fn insert_member_from_manual(pool: &sqlx::PgPool, id: i64) -> Result<(), Error> {
+pub(crate) async fn insert_member_from_manual(
+    pool: &sqlx::PgPool,
+    id: i64,
+) -> Result<ManualMember, Error> {
     let m = sqlx::query_as!(
         ManualMember,
         "delete from manual where discord_id=$1 returning *",
@@ -171,7 +174,7 @@ pub(crate) async fn insert_member_from_manual(pool: &sqlx::PgPool, id: i64) -> R
     )
     .execute(pool)
     .await?;
-    Ok(())
+    Ok(m)
 }
 
 /// Edit member shortcode field

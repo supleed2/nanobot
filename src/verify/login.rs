@@ -222,7 +222,7 @@ pub(crate) async fn login_6(
             )
             .await
             {
-                Ok(()) => {
+                Ok(p) => {
                     tracing::info!(
                         "{} ({}) added via login{}",
                         m.user.name,
@@ -257,6 +257,8 @@ pub(crate) async fn login_6(
                                 .title("Member verified via login")
                                 .description(&m.user)
                                 .field("Fresher", fresher, true)
+                                .field("Nickname", nickname, true)
+                                .field("Name", p.realname, true)
                                 .timestamp(serenity::Timestamp::now())
                             })
                         })

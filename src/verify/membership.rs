@@ -132,13 +132,14 @@ pub(crate) async fn membership_3(
                 .await?;
                 return Ok(());
             };
+            let realname = format!("{} {}", member.first_name, member.surname);
             if crate::db::insert_member(
                 &data.db,
                 crate::Member {
                     discord_id: m.user.id.into(),
                     shortcode,
-                    nickname,
-                    realname: format!("{} {}", member.first_name, member.surname),
+                    nickname: nickname.clone(),
+                    realname: realname.clone(),
                     fresher,
                 },
             )
@@ -177,6 +178,8 @@ pub(crate) async fn membership_3(
                                 .title("Member verified via membership")
                                 .description(&m.user)
                                 .field("Fresher", fresher, true)
+                                .field("Nickname", nickname, true)
+                                .field("Name", realname, true)
                                 .timestamp(serenity::Timestamp::now())
                         })
                     })

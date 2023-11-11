@@ -219,7 +219,7 @@ pub(crate) async fn insert_member_from_pending(
     match db::insert_member_from_pending(&ctx.data().db, id.user.id.into(), &nickname, fresher)
         .await
     {
-        Ok(()) => {
+        Ok(_) => {
             ctx.say(format!("Member moved from pending to members table: {id}"))
                 .await?
         }
@@ -237,7 +237,7 @@ pub(crate) async fn insert_member_from_manual(
 ) -> Result<(), Error> {
     tracing::info!("{} {}", ctx.author().name, id.user.name,);
     match db::insert_member_from_manual(&ctx.data().db, id.user.id.into()).await {
-        Ok(()) => {
+        Ok(_) => {
             ctx.say(format!("Member moved from manual to members table: {id}"))
                 .await?
         }

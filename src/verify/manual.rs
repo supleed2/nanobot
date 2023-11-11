@@ -224,7 +224,7 @@ pub(crate) async fn manual_4(
 
     if verify {
         match crate::db::insert_member_from_manual(&data.db, user.id.into()).await {
-            Ok(()) => {
+            Ok(mm) => {
                 let fresher = crate::db::get_member_by_id(&data.db, user.id.into())
                     .await?
                     .unwrap()
@@ -247,6 +247,8 @@ pub(crate) async fn manual_4(
                                     .title("Member verified via manual")
                                     .description(&user)
                                     .field("Fresher", fresher, true)
+                                    .field("Nickname", mm.nickname, true)
+                                    .field("Name", mm.realname, true)
                                     .timestamp(serenity::Timestamp::now())
                             })
                         })
