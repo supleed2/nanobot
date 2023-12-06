@@ -16,6 +16,7 @@ struct Data {
     ea_key: String,
     ea_url: String,
     fresher: serenity::RoleId,
+    gaijin: serenity::RoleId,
     gn_ch_id: serenity::ChannelId,
     member: serenity::RoleId,
     non_member: serenity::RoleId,
@@ -49,6 +50,13 @@ struct ManualMember {
     nickname: String,
     realname: String,
     fresher: bool,
+}
+
+#[derive(Debug)]
+struct Gaijin {
+    discord_id: i64,
+    name: String,
+    university: String,
 }
 
 #[shuttle_runtime::main]
@@ -86,6 +94,11 @@ async fn poise(
         .expect("FRESHER_ID not found")
         .parse()
         .expect("FRESHER_ID not valid u64");
+    let gaijin = secret_store
+        .get("GAIJIN_ID")
+        .expect("GAIJIN_ID not found")
+        .parse()
+        .expect("GAIJIN_ID not valid u64");
     let gn_ch_id = secret_store
         .get("GN_CHANNEL_ID")
         .expect("GN_CHANNEL_ID not found")
@@ -147,6 +160,7 @@ async fn poise(
                     ea_key,
                     ea_url,
                     fresher,
+                    gaijin,
                     gn_ch_id,
                     member,
                     non_member,
