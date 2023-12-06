@@ -17,6 +17,9 @@ pub(crate) use edit_members::*;
 pub(crate) mod whois;
 pub(crate) use whois::*;
 
+pub(crate) mod extras;
+pub(crate) use extras::*;
+
 /// Buttons to (de-)register application commands globally or by guild
 #[tracing::instrument(skip_all)]
 #[poise::command(prefix_command, owners_only)]

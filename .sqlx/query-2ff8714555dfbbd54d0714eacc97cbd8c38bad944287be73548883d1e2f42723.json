@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) as \"i64!\" from gaijin",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "i64!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2ff8714555dfbbd54d0714eacc97cbd8c38bad944287be73548883d1e2f42723"
+}

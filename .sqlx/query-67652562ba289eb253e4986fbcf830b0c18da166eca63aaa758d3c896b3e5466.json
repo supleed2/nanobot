@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update gaijin set name=$2 where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "67652562ba289eb253e4986fbcf830b0c18da166eca63aaa758d3c896b3e5466"
+}

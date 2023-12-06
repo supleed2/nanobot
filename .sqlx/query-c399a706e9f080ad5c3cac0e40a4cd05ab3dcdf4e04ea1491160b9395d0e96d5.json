@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from gaijin where discord_id=$1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c399a706e9f080ad5c3cac0e40a4cd05ab3dcdf4e04ea1491160b9395d0e96d5"
+}

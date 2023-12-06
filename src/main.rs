@@ -272,5 +272,11 @@ fn all_commands() -> Vec<poise::Command<Data, Error>> {
         cmds::add_manual(),
         cmds::delete_all_manual(),
         cmds::whois(),
+        cmds::count_gaijin(),
+        cmds::delete_gaijin(),
+        cmds::get_all_gaijin(),
+        cmds::get_gaijin(),
+        cmds::add_gaijin(),
+        cmds::edit_gaijin(),
     ]
 }
