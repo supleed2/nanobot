@@ -18,15 +18,14 @@ pub(crate) async fn count_members(ctx: ACtx<'_>) -> Result<(), Error> {
 #[poise::command(slash_command)]
 pub(crate) async fn delete_member(
     ctx: ACtx<'_>,
-    id: serenity::Member,
+    mut id: serenity::Member,
     remove_roles: Option<bool>,
 ) -> Result<(), Error> {
-    tracing::info!("{} {}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     if db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         if remove_roles.unwrap_or(true) {
-            let mut m = id.clone();
-            crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().member).await?;
-            crate::verify::remove_role(ctx.serenity_context(), &mut m, ctx.data().fresher).await?;
+            crate::verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
+            crate::verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
         }
         ctx.say(format!("Successfully deleted member info for {id}"))
             .await?
@@ -99,7 +98,7 @@ pub(crate) async fn get_member(_ctx: ACtx<'_>) -> Result<(), Error> {
 #[tracing::instrument(skip_all)]
 #[poise::command(slash_command, rename = "id")]
 pub(crate) async fn get_member_by_id(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    tracing::info!("{} {}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::get_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         Some(m) => {
             ctx.say(format!("Member info for {id}:\n```rust\n{m:#?}\n```"))
@@ -143,7 +142,7 @@ pub(crate) async fn get_member_by_nickname(ctx: ACtx<'_>, nickname: String) -> R
             .await?
         }
         None => {
-            ctx.say(format!("No entry found for nickname {nickname}",))
+            ctx.say(format!("No entry found for nickname {nickname}"))
                 .await?
         }
     };
@@ -163,7 +162,7 @@ pub(crate) async fn get_member_by_realname(ctx: ACtx<'_>, realname: String) -> R
             .await?
         }
         None => {
-            ctx.say(format!("No entry found for realname {realname}",))
+            ctx.say(format!("No entry found for realname {realname}"))
                 .await?
         }
     };
@@ -175,7 +174,7 @@ pub(crate) async fn get_member_by_realname(ctx: ACtx<'_>, realname: String) -> R
 #[poise::command(slash_command)]
 pub(crate) async fn add_member(
     ctx: ACtx<'_>,
-    id: serenity::Member,
+    mut id: serenity::Member,
     shortcode: String,
     nickname: String,
     realname: String,
@@ -197,10 +196,9 @@ pub(crate) async fn add_member(
         },
     )
     .await?;
-    let mut m = id.clone();
-    crate::verify::apply_role(ctx.serenity_context(), &mut m, ctx.data().member).await?;
+    crate::verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
     if fresher {
-        crate::verify::apply_role(ctx.serenity_context(), &mut m, ctx.data().fresher).await?;
+        crate::verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
     }
     ctx.say(format!("Member added: {id}")).await?;
     Ok(())
@@ -215,7 +213,7 @@ pub(crate) async fn insert_member_from_pending(
     nickname: String,
     fresher: bool,
 ) -> Result<(), Error> {
-    tracing::info!("{} {}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::insert_member_from_pending(&ctx.data().db, id.user.id.into(), &nickname, fresher)
         .await
     {
@@ -235,7 +233,7 @@ pub(crate) async fn insert_member_from_manual(
     ctx: ACtx<'_>,
     id: serenity::Member,
 ) -> Result<(), Error> {
-    tracing::info!("{} {}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::insert_member_from_manual(&ctx.data().db, id.user.id.into()).await {
         Ok(_) => {
             ctx.say(format!("Member moved from manual to members table: {id}"))

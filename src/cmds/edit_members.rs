@@ -77,7 +77,7 @@ pub(crate) async fn edit_member_fresher(
     id: serenity::Member,
     fresher: bool,
 ) -> Result<(), Error> {
-    tracing::info!("{} {} {fresher}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {} {fresher}", ctx.author().name, id.user.name);
     if db::edit_member_fresher(&ctx.data().db, id.user.id.into(), fresher).await? {
         ctx.say(format!("{id} Fresher status updated to {fresher}"))
             .await?;

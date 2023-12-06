@@ -17,7 +17,7 @@ pub(crate) async fn count_pending(ctx: ACtx<'_>) -> Result<(), Error> {
 #[tracing::instrument(skip_all)]
 #[poise::command(slash_command)]
 pub(crate) async fn delete_pending(ctx: ACtx<'_>, id: serenity::Member) -> Result<(), Error> {
-    tracing::info!("{} {}", ctx.author().name, id.user.name,);
+    tracing::info!("{} {}", ctx.author().name, id.user.name);
     if db::delete_pending_by_id(&ctx.data().db, id.user.id.into()).await? {
         ctx.say(format!("Successfully deleted pending member info for {id}"))
             .await?
