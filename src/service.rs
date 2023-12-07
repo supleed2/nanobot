@@ -8,7 +8,15 @@ pub(crate) struct NanoBot {
 #[shuttle_runtime::async_trait]
 impl shuttle_runtime::Service for NanoBot {
     async fn bind(mut self, addr: std::net::SocketAddr) -> Result<(), shuttle_runtime::Error> {
-        let serve = axum::Server::bind(&addr).serve(self.router.into_make_service());
+        use std::future::IntoFuture;
+
+        let serve = axum::serve(
+            shuttle_runtime::tokio::net::TcpListener::bind(addr)
+                .await
+                .map_err(shuttle_runtime::CustomError::new)?,
+            self.router,
+        )
+        .into_future();
 
         tokio::select! {
             _ = self.discord.run_autosharded() => {},
