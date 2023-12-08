@@ -1,6 +1,7 @@
 use crate::{db, ACtx, Error, Gaijin};
 use poise::serenity_prelude as serenity;
 use poise::Modal;
+use std::fmt::Write;
 
 /// Get the number of entries in the gaijin table
 #[tracing::instrument(skip_all)]
@@ -117,10 +118,10 @@ pub(crate) async fn get_gaijin_by_name(ctx: ACtx<'_>, name: String) -> Result<()
         } else {
             ctx.say(format!(
                 "Possible matches for {name}: {}",
-                gaijin
-                    .iter()
-                    .map(|g| format!(" <@{}>", g.discord_id))
-                    .collect::<String>()
+                gaijin.iter().fold(String::new(), |mut s, g| {
+                    write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
+                    s
+                })
             ))
             .await?;
         }

@@ -1,5 +1,6 @@
 use crate::{db, ACtx, Error};
 use poise::serenity_prelude as serenity;
+use std::fmt::Write;
 
 /// Unreachable, used to create whois command folder
 #[allow(clippy::unused_async)]
@@ -55,10 +56,10 @@ pub(crate) async fn whois_by_nickname(ctx: ACtx<'_>, nickname: String) -> Result
             ctx.send(|c| {
                 c.ephemeral(true).content(format!(
                     "Possible matches for {nickname}: {}",
-                    members
-                        .iter()
-                        .map(|m| format!(" <@{}>", m.discord_id))
-                        .collect::<String>()
+                    members.iter().fold(String::new(), |mut s, g| {
+                        write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
+                        s
+                    })
                 ))
             })
             .await?;
@@ -90,10 +91,10 @@ pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result
             ctx.send(|c| {
                 c.ephemeral(true).content(format!(
                     "Possible matches for {realname}: {}",
-                    members
-                        .iter()
-                        .map(|m| format!(" <@{}>", m.discord_id))
-                        .collect::<String>()
+                    members.iter().fold(String::new(), |mut s, g| {
+                        write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
+                        s
+                    })
                 ))
             })
             .await?;

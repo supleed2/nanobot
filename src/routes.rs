@@ -41,7 +41,7 @@ pub(crate) async fn verify(
                 )
                 .await
                 {
-                    Ok(_) => {
+                    Ok(()) => {
                         tracing::info!(
                             "ID {} added: {}, {}",
                             id,
