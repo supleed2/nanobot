@@ -97,7 +97,7 @@ pub(crate) async fn refresh_non_members(ctx: ACtx<'_>) -> Result<(), Error> {
     ctx.defer().await?;
     let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
     let mut cnt = 0;
-    while let Some(Ok(mut m)) = members.next().await {
+    while let Some(Ok(m)) = members.next().await {
         if m.roles.is_empty() {
             m.add_role(ctx.http(), ctx.data().non_member).await?;
             cnt += 1;
@@ -122,7 +122,7 @@ pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> 
     ctx.say(format!("{updated} updated to non-fresher, removing roles"))
         .await?;
     let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
-    while let Some(Ok(mut m)) = members.next().await {
+    while let Some(Ok(m)) = members.next().await {
         let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
     }
     ctx.say("Roles removed").await?;

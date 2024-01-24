@@ -1,8 +1,15 @@
 use crate::{Data, Error};
+use poise::serenity_prelude as serenity;
 
 pub(crate) struct NanoBot {
-    pub discord: poise::FrameworkBuilder<Data, Error>,
+    pub discord: Discord,
     pub router: axum::Router,
+}
+
+pub(crate) struct Discord {
+    pub framework: poise::Framework<Data, Error>,
+    pub token: String,
+    pub intents: serenity::GatewayIntents,
 }
 
 #[shuttle_runtime::async_trait]
@@ -18,8 +25,13 @@ impl shuttle_runtime::Service for NanoBot {
         )
         .into_future();
 
+        let mut client = serenity::ClientBuilder::new(self.discord.token, self.discord.intents)
+            .framework(self.discord.framework)
+            .await
+            .map_err(shuttle_runtime::CustomError::new)?;
+
         tokio::select! {
-            _ = self.discord.run_autosharded() => {},
+            _ = client.start_autosharded() => {},
             _ = serve => {},
         };
 

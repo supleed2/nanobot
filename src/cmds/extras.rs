@@ -1,6 +1,8 @@
 use crate::{db, ACtx, Error, Gaijin};
-use poise::serenity_prelude as serenity;
-use poise::Modal;
+use poise::{
+    serenity_prelude::{self as serenity, CreateAttachment, CreateMessage},
+    Modal,
+};
 use std::fmt::Write;
 
 /// Get the number of entries in the gaijin table
@@ -57,9 +59,11 @@ pub(crate) async fn get_all_gaijin(ctx: ACtx<'_>) -> Result<(), Error> {
                     ctx.say("Sending gaijin db data in followup message")
                         .await?;
                     ctx.channel_id()
-                        .send_files(&ctx.http(), vec!["gaijin.rs"], |cm| {
-                            cm.content("File: gaijin db")
-                        })
+                        .send_files(
+                            &ctx.http(),
+                            vec![CreateAttachment::path("gaijin.rs").await?],
+                            CreateMessage::new().content("File: gaijin db"),
+                        )
                         .await?;
                 }
                 Err(e) => {

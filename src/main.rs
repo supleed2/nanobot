@@ -1,6 +1,6 @@
 #![warn(clippy::pedantic)]
 use anyhow::Context as _;
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, FullEvent};
 
 mod cmds;
 mod db;
@@ -59,14 +59,24 @@ struct Gaijin {
     university: String,
 }
 
+macro_rules! secret {
+    ($s: literal, $ss: ident) => {
+        $ss.get($s).context(format!("{} not found", $s))?
+    };
+    ($s: literal, $ss: ident, $t: ty) => {
+        secret!($s, $ss)
+            .parse::<$t>()
+            .context(format!("{} not valid {}", $s, stringify!($t)))?
+    };
+}
+
 #[shuttle_runtime::main]
-async fn poise(
+async fn nanobot(
     #[shuttle_secrets::Secrets] secret_store: shuttle_secrets::SecretStore,
     #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
 ) -> Result<service::NanoBot, shuttle_runtime::Error> {
     // Set Up Tracing Subscriber
     init_tracing_subscriber();
-    tracing::info!("Tracing Subscriber Set Up");
 
     // Run SQLx Migrations
     sqlx::migrate!()
@@ -74,58 +84,8 @@ async fn poise(
         .await
         .map_err(shuttle_runtime::CustomError::new)?;
 
-    // Load secrets
-    let au_ch_id = secret_store
-        .get("AU_CHANNEL_ID")
-        .expect("AU_CHANNEL_ID not found")
-        .parse()
-        .expect("AU_CHANNEL_ID not valid u64");
-    let ea_key = secret_store
-        .get("EA_API_KEY")
-        .expect("EA_API_KEY not found");
-    let ea_url = secret_store
-        .get("EA_API_URL")
-        .expect("EA_API_URL not found");
-    let token = secret_store
-        .get("DISCORD_TOKEN")
-        .expect("DISCORD_TOKEN not found");
-    let fresher = secret_store
-        .get("FRESHER_ID")
-        .expect("FRESHER_ID not found")
-        .parse()
-        .expect("FRESHER_ID not valid u64");
-    let gaijin = secret_store
-        .get("GAIJIN_ID")
-        .expect("GAIJIN_ID not found")
-        .parse()
-        .expect("GAIJIN_ID not valid u64");
-    let gn_ch_id = secret_store
-        .get("GN_CHANNEL_ID")
-        .expect("GN_CHANNEL_ID not found")
-        .parse()
-        .expect("GN_CHANNEL_ID not valid u64");
-    let member = secret_store
-        .get("MEMBER_ID")
-        .expect("MEMBER_ID not found")
-        .parse()
-        .expect("MEMBER_ID not valid u64");
-    let non_member = secret_store
-        .get("NON_MEMBER_ID")
-        .expect("NON_MEMBER_ID not found")
-        .parse()
-        .expect("NON_MEMBER_ID not valid u64");
-    let old_member = secret_store
-        .get("OLD_MEMBER_ID")
-        .expect("OLD_MEMBER_ID not found")
-        .parse()
-        .expect("OLD_MEMBER_ID not valid u64");
-    let server = secret_store
-        .get("SERVER_ID")
-        .expect("SERVER_ID not found")
-        .parse::<u64>()
-        .expect("SERVER_ID not valid u64")
-        .into();
-    tracing::info!("Secrets loaded");
+    // Load token
+    let token = secret!("DISCORD_TOKEN", secret_store);
 
     // Build Axum Router
     let router = axum::Router::new()
@@ -142,33 +102,40 @@ async fn poise(
         );
 
     // Build Poise Instance
-    let discord = poise::Framework::builder()
+    let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: all_commands(),
             event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
             ..Default::default()
         })
-        .token(token)
-        .intents(serenity::GatewayIntents::non_privileged())
         .setup(move |ctx, _, _| {
             Box::pin(async move {
-                ctx.set_activity(serenity::Activity::competing("autoverification"))
-                    .await;
+                ctx.set_activity(Some(serenity::ActivityData::custom(
+                    "Verifying members since 2023",
+                )));
                 Ok(Data {
-                    au_ch_id,
+                    au_ch_id: secret!("AU_CHANNEL_ID", secret_store, _),
                     db: pool,
-                    ea_key,
-                    ea_url,
-                    fresher,
-                    gaijin,
-                    gn_ch_id,
-                    member,
-                    non_member,
-                    old_member,
-                    server,
+                    ea_key: secret!("EA_API_KEY", secret_store),
+                    ea_url: secret!("EA_API_URL", secret_store),
+                    fresher: secret!("FRESHER_ID", secret_store, _),
+                    gaijin: secret!("GAIJIN_ID", secret_store, _),
+                    gn_ch_id: secret!("GN_CHANNEL_ID", secret_store, _),
+                    member: secret!("MEMBER_ID", secret_store, _),
+                    non_member: secret!("NON_MEMBER_ID", secret_store, _),
+                    old_member: secret!("OLD_MEMBER_ID", secret_store, _),
+                    server: secret!("SERVER_ID", secret_store, _),
                 })
             })
-        });
+        })
+        .build();
+
+    // Build Discord struct
+    let discord = service::Discord {
+        framework,
+        token,
+        intents: serenity::GatewayIntents::non_privileged(),
+    };
 
     // Return NanoBot
     Ok(service::NanoBot { discord, router })
@@ -176,16 +143,16 @@ async fn poise(
 
 async fn event_handler(
     ctx: &serenity::Context,
-    event: &poise::Event<'_>,
+    event: &FullEvent,
     _framework: poise::FrameworkContext<'_, Data, Error>,
     data: &Data,
 ) -> Result<(), Error> {
     match event {
-        poise::Event::GuildMemberAddition { new_member } => {
+        FullEvent::GuildMemberAddition { new_member } => {
             tracing::info!("Member joined: {}", new_member.user.name);
         }
-        poise::Event::InteractionCreate {
-            interaction: serenity::Interaction::MessageComponent(m),
+        FullEvent::InteractionCreate {
+            interaction: serenity::Interaction::Component(m),
         } => {
             tracing::info!("Interaction: {} by {}", m.data.custom_id, m.user.name);
             match m.data.custom_id.as_str() {
@@ -214,8 +181,8 @@ async fn event_handler(
                 }
             }
         }
-        poise::Event::InteractionCreate {
-            interaction: serenity::Interaction::ModalSubmit(m),
+        FullEvent::InteractionCreate {
+            interaction: serenity::Interaction::Modal(m),
         } => {
             tracing::info!("Modal submit: {} by {}", m.data.custom_id, m.user.name);
             match m.data.custom_id.as_str() {

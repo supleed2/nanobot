@@ -1,5 +1,5 @@
 use crate::{db, ACtx, Error, Member};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
 /// Get the number of members in the members table
@@ -57,9 +57,11 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
                     ctx.say("Sending members db data in followup message")
                         .await?;
                     ctx.channel_id()
-                        .send_files(&ctx.http(), vec!["members.rs"], |cm| {
-                            cm.content("File: members db")
-                        })
+                        .send_files(
+                            &ctx.http(),
+                            vec![CreateAttachment::path("members.rs").await?],
+                            CreateMessage::new().content("File: members db"),
+                        )
                         .await?;
                 }
                 Err(e) => {

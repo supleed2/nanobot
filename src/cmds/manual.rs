@@ -1,5 +1,5 @@
 use crate::{db, ACtx, Error, ManualMember};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
 /// Get the number of manual members in the manual table
@@ -49,9 +49,11 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
                     ctx.say("Sending manual db data in followup message")
                         .await?;
                     ctx.channel_id()
-                        .send_files(&ctx.http(), vec!["manual.rs"], |cm| {
-                            cm.content("File: manual db")
-                        })
+                        .send_files(
+                            &ctx.http(),
+                            vec![CreateAttachment::path("manual.rs").await?],
+                            CreateMessage::new().content("File: manual db"),
+                        )
                         .await?;
                 }
                 Err(e) => {

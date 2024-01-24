@@ -1,5 +1,8 @@
 use crate::{Data, Error};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{
+    self as serenity, CacheHttp, CreateActionRow, CreateButton, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage,
+};
 
 pub(crate) mod login;
 pub(crate) use login::*;
@@ -23,12 +26,16 @@ const INFO_MSG: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn info(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|d| d.content(INFO_MSG).ephemeral(true))
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .content(INFO_MSG)
+                .ephemeral(true),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -36,15 +43,19 @@ pub(crate) async fn info(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn unknown(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-			.interaction_response_data(|d| {
-				d.content("Sorry, something went wrong. Please try again or message <@99217900254035968> for help")
-					.ephemeral(true)
-		})
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .content(
+                    "Sorry, something went wrong. Please try again \
+                    or message <@99217900254035968> for help",
+                )
+                .ephemeral(true),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -59,7 +70,7 @@ const START_MSG: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn start(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     data: &Data,
     init: bool,
 ) -> Result<(), Error> {
@@ -70,46 +81,41 @@ pub(crate) async fn start(
         if member.fresher {
             apply_role(ctx, &mut mm, data.fresher).await?;
         }
-        m.create_interaction_response(&ctx.http, |i| {
-            i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                .interaction_response_data(|d| {
-                    d.content("Welcome, you're already verified, re-applied your roles!")
-                        .ephemeral(true)
-                })
-        })
+        m.create_response(
+            &ctx.http,
+            CreateInteractionResponse::Message(
+                CreateInteractionResponseMessage::new()
+                    .content("Welcome, you're already verified, re-applied your roles!")
+                    .ephemeral(true),
+            ),
+        )
         .await?;
     } else {
-        m.create_interaction_response(&ctx.http, |i| {
-            i.kind(if init {
-                serenity::InteractionResponseType::ChannelMessageWithSource
+        let irm = CreateInteractionResponseMessage::new()
+            .content(START_MSG)
+            .ephemeral(true)
+            .components(vec![CreateActionRow::Buttons(vec![
+                CreateButton::new("login_1")
+                    .style(serenity::ButtonStyle::Primary)
+                    .emoji('🚀')
+                    .label("Login"),
+                CreateButton::new("membership_1")
+                    .style(serenity::ButtonStyle::Secondary)
+                    .emoji(serenity::ReactionType::Unicode("✈️".to_string()))
+                    .label("Membership"),
+                CreateButton::new("manual_1")
+                    .style(serenity::ButtonStyle::Secondary)
+                    .emoji('🚗')
+                    .label("Manual"),
+            ])]);
+        m.create_response(
+            &ctx.http,
+            if init {
+                CreateInteractionResponse::Message(irm)
             } else {
-                serenity::InteractionResponseType::UpdateMessage
-            })
-            .interaction_response_data(|d| {
-                d.content(START_MSG).ephemeral(true).components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Primary)
-                                .emoji('🚀')
-                                .label("Login")
-                                .custom_id("login_1")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Secondary)
-                                .emoji(serenity::ReactionType::Unicode("✈️".to_string()))
-                                .label("Membership")
-                                .custom_id("membership_1")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Secondary)
-                                .emoji('🚗')
-                                .label("Manual")
-                                .custom_id("manual_1")
-                        })
-                    })
-                })
-            })
-        })
+                CreateInteractionResponse::UpdateMessage(irm)
+            },
+        )
         .await?;
     };
     Ok(())
@@ -135,14 +141,15 @@ pub(crate) async fn remove_role(
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn welcome_user(
-    http: impl AsRef<serenity::http::Http>,
+    http: impl CacheHttp,
     channel: &serenity::ChannelId,
     user: &serenity::User,
     fresher: bool,
 ) -> Result<(), Error> {
     channel
-        .send_message(http, |m| {
-            m.content(format!(
+        .send_message(
+            http,
+            CreateMessage::new().content(format!(
                 "Welcome to ICAS {user}, if you have any questions, \
                     feel free to ping a committee member{}!",
                 if fresher {
@@ -150,8 +157,8 @@ pub(crate) async fn welcome_user(
                 } else {
                     ""
                 }
-            ))
-        })
+            )),
+        )
         .await?;
     Ok(())
 }

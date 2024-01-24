@@ -1,5 +1,8 @@
 use crate::{Data, Error};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{
+    self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage,
+};
 use poise::Modal;
 
 const MEMBERSHIP_INTRO: &str = indoc::indoc! {"
@@ -17,34 +20,28 @@ const MEMBERSHIP_INTRO: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn membership_1(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::UpdateMessage)
-            .interaction_response_data(|d| {
-                d.content(MEMBERSHIP_INTRO).components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Danger)
-                                .emoji('🔙')
-                                .custom_id("restart")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Success)
-                                .emoji('✅')
-                                .label("Fresher")
-                                .custom_id("membership_2f")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Primary)
-                                .emoji('❌')
-                                .label("Non-fresher")
-                                .custom_id("membership_2n")
-                        })
-                    })
-                })
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::UpdateMessage(
+            CreateInteractionResponseMessage::new()
+                .content(MEMBERSHIP_INTRO)
+                .components(vec![CreateActionRow::Buttons(vec![
+                    CreateButton::new("restart")
+                        .style(serenity::ButtonStyle::Danger)
+                        .emoji('🔙'),
+                    CreateButton::new("membership_2f")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('✅')
+                        .label("Fresher"),
+                    CreateButton::new("membership_2n")
+                        .style(serenity::ButtonStyle::Primary)
+                        .emoji('❌')
+                        .label("Non-fresher"),
+                ])]),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -66,7 +63,7 @@ struct Membership {
 #[tracing::instrument(skip_all)]
 pub(crate) async fn membership_2(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     data: &Data,
     fresher: bool,
 ) -> Result<(), Error> {
@@ -76,17 +73,17 @@ pub(crate) async fn membership_2(
     // Delete from manual if exists
     let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
-    m.create_interaction_response(&ctx.http, |i| {
-        *i = Membership::create(
+    m.create_response(
+        &ctx.http,
+        Membership::create(
             None,
             if fresher {
                 "membership_3f".to_string()
             } else {
                 "membership_3n".to_string()
             },
-        );
-        i
-    })
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -94,7 +91,7 @@ pub(crate) async fn membership_2(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn membership_3(
     ctx: &serenity::Context,
-    m: &serenity::ModalSubmitInteraction,
+    m: &serenity::ModalInteraction,
     data: &Data,
     fresher: bool,
 ) -> Result<(), Error> {
@@ -108,13 +105,14 @@ pub(crate) async fn membership_3(
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!("{e}");
-                    m.create_interaction_response(&ctx.http, |i| {
-                        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                            .interaction_response_data(|d| {
-                                d.content("Sorry, getting membership data failed. Please try again")
-                                    .ephemeral(true)
-                            })
-                    })
+                    m.create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new()
+                                .content("Sorry, getting membership data failed. Please try again")
+                                .ephemeral(true),
+                        ),
+                    )
                     .await?;
                     return Ok(());
                 }
@@ -123,12 +121,16 @@ pub(crate) async fn membership_3(
                 ((member.login.is_empty() && member.cid == shortcode) || member.login == shortcode)
                     && member.order_no.to_string() == order
             }) else {
-                m.create_interaction_response(&ctx.http, |i| {
-                    let msg = "Sorry, your order was not found, please check the \
-                            order number and that it is for your current year's membership";
-                    i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|d| d.content(msg).ephemeral(true))
-                })
+                let msg = "Sorry, your order was not found, please check the \
+                        order number and that it is for your current year's membership";
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content(msg)
+                            .ephemeral(true),
+                    ),
+                )
                 .await?;
                 return Ok(());
             };
@@ -157,32 +159,35 @@ pub(crate) async fn membership_3(
                 if fresher {
                     crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
                 }
-                m.create_interaction_response(&ctx.http, |i| {
-                    i.kind(serenity::InteractionResponseType::UpdateMessage)
-                        .interaction_response_data(|d| {
-                            d.content(if fresher {
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::UpdateMessage(
+                        CreateInteractionResponseMessage::new()
+                            .content(if fresher {
                                 "Congratulations, you have completed verification and now \
                                 have access to the ICAS Discord and freshers thread"
                             } else {
                                 "Congratulations, you have completed verification and now \
                                 have access to the ICAS Discord"
                             })
-                            .components(|c| c)
-                        })
-                })
+                            .components(vec![]),
+                    ),
+                )
                 .await?;
                 data.au_ch_id
-                    .send_message(&ctx.http, |cm| {
-                        cm.add_embed(|e| {
-                            e.thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                    .send_message(
+                        &ctx.http,
+                        CreateMessage::new().embed(
+                            CreateEmbed::new()
+                                .thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
                                 .title("Member verified via membership")
-                                .description(&m.user)
-                                .field("Fresher", fresher, true)
+                                .description(m.user.to_string())
+                                .field("Fresher", fresher.to_string(), true)
                                 .field("Nickname", nickname, true)
                                 .field("Name", realname, true)
-                                .timestamp(serenity::Timestamp::now())
-                        })
-                    })
+                                .timestamp(serenity::Timestamp::now()),
+                        ),
+                    )
                     .await?;
                 let _ = mm.remove_role(&ctx.http, data.non_member).await;
                 if mm.roles.contains(&data.old_member) {
@@ -196,13 +201,14 @@ pub(crate) async fn membership_3(
         }
         Err(e) => tracing::error!("{e}"),
     };
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|d| {
-                d.content("Sorry, something went wrong. Please try again")
-                    .ephemeral(true)
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .content("Sorry, something went wrong. Please try again")
+                .ephemeral(true),
+        ),
+    )
     .await?;
     Ok(())
 }

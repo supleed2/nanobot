@@ -1,5 +1,8 @@
 use crate::{Data, Error};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{
+    self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage,
+};
 use poise::Modal;
 
 const MANUAL_INTRO: &str = indoc::indoc! {"
@@ -19,34 +22,28 @@ const MANUAL_INTRO: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_1(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::UpdateMessage)
-            .interaction_response_data(|d| {
-                d.content(MANUAL_INTRO).components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Danger)
-                                .emoji('🔙')
-                                .custom_id("restart")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Success)
-                                .emoji('✅')
-                                .label("Fresher")
-                                .custom_id("manual_2f")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Primary)
-                                .emoji('❌')
-                                .label("Non-fresher")
-                                .custom_id("manual_2n")
-                        })
-                    })
-                })
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::UpdateMessage(
+            CreateInteractionResponseMessage::new()
+                .content(MANUAL_INTRO)
+                .components(vec![CreateActionRow::Buttons(vec![
+                    CreateButton::new("restart")
+                        .style(serenity::ButtonStyle::Danger)
+                        .emoji('🔙'),
+                    CreateButton::new("manual_2f")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('✅')
+                        .label("Fresher"),
+                    CreateButton::new("manual_2n")
+                        .style(serenity::ButtonStyle::Primary)
+                        .emoji('❌')
+                        .label("Non-fresher"),
+                ])]),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -72,24 +69,24 @@ struct Manual {
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_2(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     data: &Data,
     fresher: bool,
 ) -> Result<(), Error> {
     // Delete from manual if exists
     let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
-    m.create_interaction_response(&ctx.http, |i| {
-        *i = Manual::create(
+    m.create_response(
+        &ctx.http,
+        Manual::create(
             None,
             if fresher {
                 "manual_3f".to_string()
             } else {
                 "manual_3n".to_string()
             },
-        );
-        i
-    })
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -97,7 +94,7 @@ pub(crate) async fn manual_2(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_3(
     ctx: &serenity::Context,
-    m: &serenity::ModalSubmitInteraction,
+    m: &serenity::ModalInteraction,
     data: &Data,
     fresher: bool,
 ) -> Result<(), Error> {
@@ -109,13 +106,14 @@ pub(crate) async fn manual_3(
             nickname,
         }) => {
             if ::url::Url::parse(&url).is_err() {
-                m.create_interaction_response(&ctx.http, |i| {
-                    i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|d| {
-                            d.content("The url provided is invalid, please try again")
-                                .ephemeral(true)
-                        })
-                })
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content("The url provided is invalid, please try again")
+                            .ephemeral(true),
+                    ),
+                )
                 .await?;
                 return Ok(());
             }
@@ -125,36 +123,33 @@ pub(crate) async fn manual_3(
 
             let prompt_sent = data
                 .au_ch_id
-                .send_message(&ctx.http, |cm| {
-                    cm.add_embed(|e| {
-                        e.title("New verification request from")
-                            .thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
-                            .description(&m.user)
-                            .field("Real Name (To be checked)", &realname, true)
-                            .field("Imperial Shortcode (To be checked", &shortcode, true)
-                            .field("Fresher (To be checked)", fresher, true)
-                            .field("Nickname (Nano whois commands)", &nickname, true)
-                            .field("Verification URL (Also displayed below)", &url, true)
-                            .image(&url)
-                            .timestamp(serenity::Timestamp::now())
-                    })
-                    .components(|c| {
-                        c.create_action_row(|a| {
-                            a.create_button(|b| {
-                                b.style(serenity::ButtonStyle::Success)
-                                    .emoji('✅')
-                                    .label("Accept")
-                                    .custom_id(format!("verify-y-{}", m.user.id))
-                            })
-                            .create_button(|b| {
-                                b.style(serenity::ButtonStyle::Danger)
-                                    .emoji('❎')
-                                    .label("Deny")
-                                    .custom_id(format!("verify-n-{}", m.user.id))
-                            })
-                        })
-                    })
-                })
+                .send_message(
+                    &ctx.http,
+                    CreateMessage::new()
+                        .embed(
+                            CreateEmbed::new()
+                                .title("New verification request from")
+                                .thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                                .description(m.user.to_string())
+                                .field("Real Name (To be checked)", &realname, true)
+                                .field("Imperial Shortcode (To be checked", &shortcode, true)
+                                .field("Fresher (To be checked)", fresher.to_string(), true)
+                                .field("Nickname (Nano whois commands)", &nickname, true)
+                                .field("Verification URL (Also displayed below)", &url, true)
+                                .image(&url)
+                                .timestamp(serenity::Timestamp::now()),
+                        )
+                        .components(vec![CreateActionRow::Buttons(vec![
+                            CreateButton::new(format!("verify-y-{}", m.user.id))
+                                .style(serenity::ButtonStyle::Success)
+                                .emoji('✅')
+                                .label("Accept"),
+                            CreateButton::new(format!("verify-n-{}", m.user.id))
+                                .style(serenity::ButtonStyle::Danger)
+                                .emoji('❎')
+                                .label("Deny"),
+                        ])]),
+                )
                 .await
                 .is_ok();
 
@@ -181,22 +176,27 @@ pub(crate) async fn manual_3(
                 "Sending your verification request failed, please try again."
             };
 
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::UpdateMessage)
-                    .interaction_response_data(|d| d.content(msg).components(|c| c))
-            })
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::UpdateMessage(
+                    CreateInteractionResponseMessage::new()
+                        .content(msg)
+                        .components(vec![]),
+                ),
+            )
             .await?;
             return Ok(());
         }
         Err(e) => tracing::error!("{e}"),
     };
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-            .interaction_response_data(|d| {
-                d.content("Sorry, something went wrong. Please try again")
-                    .ephemeral(true)
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::Message(
+            CreateInteractionResponseMessage::new()
+                .content("Sorry, something went wrong. Please try again")
+                .ephemeral(true),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -204,7 +204,7 @@ pub(crate) async fn manual_3(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_4(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     data: &Data,
     id: &str,
 ) -> Result<(), Error> {
@@ -214,7 +214,7 @@ pub(crate) async fn manual_4(
         .skip(9)
         .collect::<String>()
         .parse::<u64>()
-        .map(serenity::UserId)
+        .map(serenity::UserId::new)
         .unwrap_or_default()
         .to_user(ctx)
         .await
@@ -239,20 +239,25 @@ pub(crate) async fn manual_4(
                 if fresher {
                     crate::verify::apply_role(ctx, &mut member, data.fresher).await?;
                 }
-                m.create_interaction_response(&ctx.http, |i| {
-                    i.kind(serenity::InteractionResponseType::UpdateMessage)
-                        .interaction_response_data(|d| {
-                            d.components(|c| c).embed(|e| {
-                                e.thumbnail(user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::UpdateMessage(
+                        CreateInteractionResponseMessage::new()
+                            .components(vec![])
+                            .embed(
+                                CreateEmbed::new()
+                                    .thumbnail(
+                                        user.avatar_url().unwrap_or(super::AVATAR.to_string()),
+                                    )
                                     .title("Member verified via manual")
-                                    .description(&user)
-                                    .field("Fresher", fresher, true)
+                                    .description(user.to_string())
+                                    .field("Fresher", fresher.to_string(), true)
                                     .field("Nickname", mm.nickname, true)
                                     .field("Name", mm.realname, true)
-                                    .timestamp(serenity::Timestamp::now())
-                            })
-                        })
-                })
+                                    .timestamp(serenity::Timestamp::now()),
+                            ),
+                    ),
+                )
                 .await?;
                 let _ = member.remove_role(&ctx.http, data.non_member).await;
                 if member.roles.contains(&data.old_member) {
@@ -263,29 +268,33 @@ pub(crate) async fn manual_4(
             }
             Err(e) => {
                 tracing::error!("{e}");
-                m.create_interaction_response(&ctx.http, |i| {
-                    i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|d| {
-                            d.content(format!("Failed to add user {user} to member database"))
-                        })
-                })
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content(format!("Failed to add user {user} to member database")),
+                    ),
+                )
                 .await?;
             }
         }
     } else {
         crate::db::delete_manual_by_id(&data.db, user.id.into()).await?;
         tracing::info!("{} ({}) denied via manual", user.name, user.id);
-        m.create_interaction_response(&ctx.http, |i| {
-            i.kind(serenity::InteractionResponseType::UpdateMessage)
-                .interaction_response_data(|d| {
-                    d.components(|c| c).embed(|e| {
-                        e.title("Member denied via manual")
-                            .description(&user)
+        m.create_response(
+            &ctx.http,
+            CreateInteractionResponse::UpdateMessage(
+                CreateInteractionResponseMessage::new()
+                    .components(vec![])
+                    .embed(
+                        CreateEmbed::new()
+                            .title("Member denied via manual")
+                            .description(user.to_string())
                             .thumbnail(user.avatar_url().unwrap_or(super::AVATAR.to_string()))
-                            .timestamp(serenity::Timestamp::now())
-                    })
-                })
-        })
+                            .timestamp(serenity::Timestamp::now()),
+                    ),
+            ),
+        )
         .await?;
     }
 

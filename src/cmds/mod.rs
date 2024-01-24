@@ -1,5 +1,5 @@
 use crate::{ACtx, Data, Error};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, CreateActionRow, CreateButton, CreateMessage};
 use poise::Modal;
 
 pub(crate) mod members;
@@ -67,24 +67,21 @@ pub(crate) async fn setup(
             .await?;
         let emoji = emoji.unwrap_or_default().chars().next().unwrap_or('🚀');
         channel
-            .send_message(ctx.http(), |m| {
-                m.content(message).components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Secondary)
-                                .emoji('📖')
-                                .label("More info")
-                                .custom_id("info")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Primary)
-                                .emoji(emoji)
-                                .label(text.unwrap_or("Begin".to_string()))
-                                .custom_id("start")
-                        })
-                    })
-                })
-            })
+            .send_message(
+                ctx.http(),
+                CreateMessage::new()
+                    .content(message)
+                    .components(vec![CreateActionRow::Buttons(vec![
+                        CreateButton::new("info")
+                            .style(serenity::ButtonStyle::Secondary)
+                            .emoji('📖')
+                            .label("More info"),
+                        CreateButton::new("start")
+                            .style(serenity::ButtonStyle::Primary)
+                            .emoji(emoji)
+                            .label(text.unwrap_or("Begin".to_string())),
+                    ])]),
+            )
             .await?;
     } else {
         ctx.say("Modal timed out, try again...").await?;

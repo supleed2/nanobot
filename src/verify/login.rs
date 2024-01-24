@@ -1,5 +1,8 @@
 use crate::{Data, Error};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{
+    self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
+    CreateInteractionResponseMessage, CreateMessage,
+};
 use poise::Modal;
 
 const LOGIN_INTRO: &str = indoc::indoc! {"
@@ -14,34 +17,28 @@ const LOGIN_INTRO: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_1(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::UpdateMessage)
-            .interaction_response_data(|d| {
-                d.content(LOGIN_INTRO).components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Danger)
-                                .emoji('🔙')
-                                .custom_id("restart")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Link)
-                                .emoji('🚀')
-                                .label("Login Here")
-                                .url(format!("https://icas.8bitsqu.id/verify?id={}", m.user.id.0))
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Secondary)
-                                .emoji('👉')
-                                .label("Then continue")
-                                .custom_id("login_2")
-                        })
-                    })
-                })
-            })
-    })
+    let verify_url = format!("https://icas.8bitsqu.id/verify?id={}", m.user.id.get());
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::UpdateMessage(
+            CreateInteractionResponseMessage::new()
+                .content(LOGIN_INTRO)
+                .components(vec![CreateActionRow::Buttons(vec![
+                    CreateButton::new("restart")
+                        .style(serenity::ButtonStyle::Danger)
+                        .emoji('🔙'),
+                    CreateButton::new_link(verify_url)
+                        .emoji('🚀')
+                        .label("Login Here"),
+                    CreateButton::new("login_2")
+                        .style(serenity::ButtonStyle::Secondary)
+                        .emoji('👉')
+                        .label("Then continue"),
+                ])]),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -55,52 +52,50 @@ const LOGIN_FORM: &str = indoc::indoc! {"
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_2(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     data: &Data,
 ) -> Result<(), Error> {
     match crate::db::get_pending_by_id(&data.db, m.user.id.into()).await {
         Err(e) => {
             tracing::error!("{e}");
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|d| {
-                        d.content("Sorry, something went wrong. Please try again")
-                            .ephemeral(true)
-                    })
-            })
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Sorry, something went wrong. Please try again")
+                        .ephemeral(true),
+                ),
+            )
             .await?;
         }
         Ok(None) => {
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                    .interaction_response_data(|d| {
-                        d.content("Error, have you completed login verification via the link?")
-                            .ephemeral(true)
-                    })
-            })
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Error, have you completed login verification via the link?")
+                        .ephemeral(true),
+                ),
+            )
             .await?;
         }
         Ok(Some(_)) => {
-            m.create_interaction_response(&ctx.http, |i| {
-                i.kind(serenity::InteractionResponseType::UpdateMessage)
-                    .interaction_response_data(|d| {
-                        d.content(LOGIN_FORM).components(|c| {
-                            c.create_action_row(|a| {
-                                a.create_button(|b| {
-                                    b.style(serenity::ButtonStyle::Danger)
-                                        .emoji('🔙')
-                                        .custom_id("login_1")
-                                })
-                                .create_button(|b| {
-                                    b.style(serenity::ButtonStyle::Primary)
-                                        .emoji('📑')
-                                        .label("Form")
-                                        .custom_id("login_3")
-                                })
-                            })
-                        })
-                    })
-            })
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::UpdateMessage(
+                    CreateInteractionResponseMessage::new()
+                        .content(LOGIN_FORM)
+                        .components(vec![CreateActionRow::Buttons(vec![
+                            CreateButton::new("login_1")
+                                .style(serenity::ButtonStyle::Danger)
+                                .emoji('🔙'),
+                            CreateButton::new("login_3")
+                                .style(serenity::ButtonStyle::Primary)
+                                .emoji('📑')
+                                .label("Form"),
+                        ])]),
+                ),
+            )
             .await?;
         }
     };
@@ -110,34 +105,28 @@ pub(crate) async fn login_2(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_3(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::UpdateMessage)
-            .interaction_response_data(|d| {
-                d.content("Are you a fresher?").components(|c| {
-                    c.create_action_row(|a| {
-                        a.create_button(|b| {
-                            b.style(serenity::ButtonStyle::Danger)
-                                .emoji('🔙')
-                                .custom_id("login_2")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Success)
-                                .emoji('✅')
-                                .label("Fresher")
-                                .custom_id("login_4f")
-                        })
-                        .create_button(|b| {
-                            b.style(serenity::ButtonStyle::Primary)
-                                .emoji('❌')
-                                .label("Non-fresher")
-                                .custom_id("login_4n")
-                        })
-                    })
-                })
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::UpdateMessage(
+            CreateInteractionResponseMessage::new()
+                .content("Are you a fresher?")
+                .components(vec![CreateActionRow::Buttons(vec![
+                    CreateButton::new("login_2")
+                        .style(serenity::ButtonStyle::Danger)
+                        .emoji('🔙'),
+                    CreateButton::new("login_4f")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('✅')
+                        .label("Fresher"),
+                    CreateButton::new("login_4n")
+                        .style(serenity::ButtonStyle::Primary)
+                        .emoji('❌')
+                        .label("Non-fresher"),
+                ])]),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -145,30 +134,25 @@ pub(crate) async fn login_3(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_4(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     fresher: bool,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        i.kind(serenity::InteractionResponseType::UpdateMessage)
-            .interaction_response_data(|d| {
-                d.content("And a preferred name for Nano whois commands")
-                    .components(|c| {
-                        c.create_action_row(|a| {
-                            a.create_button(|b| {
-                                b.style(serenity::ButtonStyle::Danger)
-                                    .emoji('🔙')
-                                    .custom_id("login_3")
-                            })
-                            .create_button(|b| {
-                                b.style(serenity::ButtonStyle::Primary)
-                                    .emoji('💬')
-                                    .label("Name")
-                                    .custom_id(if fresher { "login_5f" } else { "login_5n" })
-                            })
-                        })
-                    })
-            })
-    })
+    m.create_response(
+        &ctx.http,
+        CreateInteractionResponse::UpdateMessage(
+            CreateInteractionResponseMessage::new()
+                .content("And a preferred name for Nano whois commands")
+                .components(vec![CreateActionRow::Buttons(vec![
+                    CreateButton::new("login_3")
+                        .style(serenity::ButtonStyle::Danger)
+                        .emoji('🔙'),
+                    CreateButton::new(if fresher { "login_5f" } else { "login_5n" })
+                        .style(serenity::ButtonStyle::Primary)
+                        .emoji('💬')
+                        .label("Name"),
+                ])]),
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -184,20 +168,20 @@ struct Nickname {
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_5(
     ctx: &serenity::Context,
-    m: &serenity::MessageComponentInteraction,
+    m: &serenity::ComponentInteraction,
     fresher: bool,
 ) -> Result<(), Error> {
-    m.create_interaction_response(&ctx.http, |i| {
-        *i = Nickname::create(
+    m.create_response(
+        &ctx.http,
+        Nickname::create(
             None,
             if fresher {
                 "login_6f".to_string()
             } else {
                 "login_6n".to_string()
             },
-        );
-        i
-    })
+        ),
+    )
     .await?;
     Ok(())
 }
@@ -205,7 +189,7 @@ pub(crate) async fn login_5(
 #[tracing::instrument(skip_all)]
 pub(crate) async fn login_6(
     ctx: &serenity::Context,
-    m: &serenity::ModalSubmitInteraction,
+    m: &serenity::ModalInteraction,
     data: &Data,
     fresher: bool,
 ) -> Result<(), Error> {
@@ -234,34 +218,38 @@ pub(crate) async fn login_6(
                     if fresher {
                         crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
                     }
-                    m.create_interaction_response(&ctx.http, |i| {
-                        i.kind(serenity::InteractionResponseType::UpdateMessage)
-                            .interaction_response_data(|d| {
-                                d.content(if fresher {
-                                    "Congratulations, you have completed verification and now \
-                                    have access to the ICAS Discord and freshers thread"
-                                } else {
-                                    "Congratulations, you have completed verification and now \
-                                    have access to the ICAS Discord"
-                                })
-                                .components(|c| c)
-                            })
-                    })
+                    let msg = if fresher {
+                        "Congratulations, you have completed verification and now \
+                        have access to the ICAS Discord and freshers thread"
+                    } else {
+                        "Congratulations, you have completed verification and now \
+                        have access to the ICAS Discord"
+                    };
+                    m.create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::UpdateMessage(
+                            CreateInteractionResponseMessage::new()
+                                .content(msg)
+                                .components(vec![]),
+                        ),
+                    )
                     .await?;
                     data.au_ch_id
-                        .send_message(&ctx.http, |cm| {
-                            cm.add_embed(|e| {
-                                e.thumbnail(
-                                    m.user.avatar_url().unwrap_or(super::AVATAR.to_string()),
-                                )
-                                .title("Member verified via login")
-                                .description(&m.user)
-                                .field("Fresher", fresher, true)
-                                .field("Nickname", nickname, true)
-                                .field("Name", p.realname, true)
-                                .timestamp(serenity::Timestamp::now())
-                            })
-                        })
+                        .send_message(
+                            &ctx.http,
+                            CreateMessage::new().embed(
+                                CreateEmbed::new()
+                                    .thumbnail(
+                                        m.user.avatar_url().unwrap_or(super::AVATAR.to_string()),
+                                    )
+                                    .title("Member verified via login")
+                                    .description(m.user.to_string())
+                                    .field("Fresher", fresher.to_string(), true)
+                                    .field("Nickname", nickname, true)
+                                    .field("Name", p.realname, true)
+                                    .timestamp(serenity::Timestamp::now()),
+                            ),
+                        )
                         .await?;
                     let _ = mm.remove_role(&ctx.http, data.non_member).await;
                     if mm.roles.contains(&data.old_member) {
@@ -273,13 +261,14 @@ pub(crate) async fn login_6(
                 }
                 Err(e) => {
                     tracing::error!("Error: {e}");
-                    m.create_interaction_response(&ctx.http, |i| {
-                        i.kind(serenity::InteractionResponseType::ChannelMessageWithSource)
-                            .interaction_response_data(|d| {
-                                d.content("Sorry, something went wrong. Please try again")
-                                    .ephemeral(true)
-                            })
-                    })
+                    m.create_response(
+                        &ctx.http,
+                        CreateInteractionResponse::Message(
+                            CreateInteractionResponseMessage::new()
+                                .content("Sorry, something went wrong. Please try again")
+                                .ephemeral(true),
+                        ),
+                    )
                     .await?;
                 }
             }

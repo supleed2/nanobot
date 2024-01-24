@@ -1,5 +1,5 @@
 use crate::{db, ACtx, Error, PendingMember};
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
 /// Get the number of pending members in the pending table
@@ -49,9 +49,11 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
                     ctx.say("Sending pending db data in followup message")
                         .await?;
                     ctx.channel_id()
-                        .send_files(&ctx.http(), vec!["pending.rs"], |cm| {
-                            cm.content("File: pending db")
-                        })
+                        .send_files(
+                            &ctx.http(),
+                            vec![CreateAttachment::path("pending.rs").await?],
+                            CreateMessage::new().content("File: pending db"),
+                        )
                         .await?;
                 }
                 Err(e) => {
