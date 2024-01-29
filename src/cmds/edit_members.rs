@@ -1,5 +1,50 @@
-use crate::{db, ACtx, Error};
-use poise::serenity_prelude as serenity;
+use crate::{db, verify, ACtx, Error};
+use poise::{
+    serenity_prelude::{self as serenity, CreateEmbed, CreateMessage},
+    CreateReply,
+};
+
+/// Update your nick according to nano (what shows up in `/whois`)
+#[poise::command(slash_command)]
+pub(crate) async fn nick(
+    ctx: ACtx<'_>,
+    #[min_length = 2]
+    #[max_length = 32]
+    nickname: String,
+) -> Result<(), Error> {
+    let u = ctx.author();
+    let old_nickname = db::get_member_by_id(&ctx.data().db, u.id.into())
+        .await?
+        .map_or("<missing>".to_string(), |m| m.nickname);
+    tracing::info!("{} {old_nickname} -> {nickname}", u.name);
+    if db::edit_member_nickname(&ctx.data().db, u.id.into(), &nickname).await? {
+        ctx.send(
+            CreateReply::default()
+                .content(format!("Nick updated to {nickname}"))
+                .ephemeral(true),
+        )
+        .await?;
+        ctx.data()
+            .au_ch_id
+            .send_message(
+                ctx.http(),
+                CreateMessage::new().embed(
+                    CreateEmbed::new()
+                        .title("Nick updated")
+                        .thumbnail(u.avatar_url().unwrap_or(verify::AVATAR.to_string()))
+                        .description(u.to_string())
+                        .field("Old Nick", old_nickname, true)
+                        .field("New Nick", nickname, true)
+                        .timestamp(serenity::Timestamp::now()),
+                ),
+            )
+            .await?;
+    } else {
+        ctx.say("Failed to update nick, please try again or message committee for help")
+            .await?;
+    }
+    Ok(())
+}
 
 /// Unreachable, used to create edit_member command folder
 #[allow(clippy::unused_async)]

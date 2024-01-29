@@ -237,6 +237,7 @@ fn all_commands() -> Vec<poise::Command<Data, Error>> {
         cmds::add_member(),
         cmds::insert_member_from_pending(),
         cmds::insert_member_from_manual(),
+        cmds::nick(),
         cmds::edit_member(),
         cmds::refresh_non_members(),
         cmds::set_members_non_fresher(),
