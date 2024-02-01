@@ -1,4 +1,4 @@
-use crate::{db, verify, ACtx, Error};
+use crate::{db, ACtx, Error};
 use poise::{
     serenity_prelude::{self as serenity, CreateEmbed, CreateMessage},
     CreateReply,
@@ -31,7 +31,7 @@ pub(crate) async fn nick(
                 CreateMessage::new().embed(
                     CreateEmbed::new()
                         .title("Nick updated")
-                        .thumbnail(u.avatar_url().unwrap_or(verify::AVATAR.to_string()))
+                        .thumbnail(u.face())
                         .description(u.to_string())
                         .field("Old Nick", old_nickname, true)
                         .field("New Nick", nickname, true)

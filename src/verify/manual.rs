@@ -129,7 +129,7 @@ pub(crate) async fn manual_3(
                         .embed(
                             CreateEmbed::new()
                                 .title("New verification request from")
-                                .thumbnail(m.user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                                .thumbnail(m.user.face())
                                 .description(m.user.to_string())
                                 .field("Real Name (To be checked)", &realname, true)
                                 .field("Imperial Shortcode (To be checked", &shortcode, true)
@@ -246,9 +246,7 @@ pub(crate) async fn manual_4(
                             .components(vec![])
                             .embed(
                                 CreateEmbed::new()
-                                    .thumbnail(
-                                        user.avatar_url().unwrap_or(super::AVATAR.to_string()),
-                                    )
+                                    .thumbnail(user.face())
                                     .title("Member verified via manual")
                                     .description(user.to_string())
                                     .field("Fresher", fresher.to_string(), true)
@@ -290,7 +288,7 @@ pub(crate) async fn manual_4(
                         CreateEmbed::new()
                             .title("Member denied via manual")
                             .description(user.to_string())
-                            .thumbnail(user.avatar_url().unwrap_or(super::AVATAR.to_string()))
+                            .thumbnail(user.face())
                             .timestamp(serenity::Timestamp::now()),
                     ),
             ),

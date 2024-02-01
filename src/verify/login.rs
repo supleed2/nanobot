@@ -239,9 +239,7 @@ pub(crate) async fn login_6(
                             &ctx.http,
                             CreateMessage::new().embed(
                                 CreateEmbed::new()
-                                    .thumbnail(
-                                        m.user.avatar_url().unwrap_or(super::AVATAR.to_string()),
-                                    )
+                                    .thumbnail(m.user.face())
                                     .title("Member verified via login")
                                     .description(m.user.to_string())
                                     .field("Fresher", fresher.to_string(), true)
