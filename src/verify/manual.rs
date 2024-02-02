@@ -225,18 +225,14 @@ pub(crate) async fn manual_4(
     if verify {
         match db::insert_member_from_manual(&data.db, user.id.into()).await {
             Ok(mm) => {
-                let fresher = crate::db::get_member_by_id(&data.db, user.id.into())
-                    .await?
-                    .unwrap()
-                    .fresher;
                 tracing::info!(
                     "{} ({}) added via manual{}",
                     user.name,
                     user.id,
-                    if fresher { " (fresher)" } else { "" }
+                    if mm.fresher { " (fresher)" } else { "" }
                 );
-                if fresher {
                 verify::apply_role(ctx, &mut member, data.member).await?;
+                if mm.fresher {
                     verify::apply_role(ctx, &mut member, data.fresher).await?;
                 }
                 m.create_response(
@@ -249,7 +245,7 @@ pub(crate) async fn manual_4(
                                     .thumbnail(user.face())
                                     .title("Member verified via manual")
                                     .description(user.to_string())
-                                    .field("Fresher", fresher.to_string(), true)
+                                    .field("Fresher", mm.fresher.to_string(), true)
                                     .field("Nickname", mm.nickname, true)
                                     .field("Name", mm.realname, true)
                                     .timestamp(serenity::Timestamp::now()),
@@ -261,7 +257,7 @@ pub(crate) async fn manual_4(
                 if member.roles.contains(&data.old_member) {
                     verify::remove_role(ctx, &mut member, data.old_member).await?;
                 } else {
-                    verify::welcome_user(&ctx.http, &data.gn_ch_id, &user, fresher).await?;
+                    verify::welcome_user(&ctx.http, &data.gn_ch_id, &user, mm.fresher).await?;
                 }
             }
             Err(e) => {

@@ -131,7 +131,7 @@ pub(crate) async fn insert_member_from_pending(
     id: i64,
     nickname: &str,
     fresher: bool,
-) -> Result<PendingMember, Error> {
+) -> Result<Member, Error> {
     let p = sqlx::query_as!(
         PendingMember,
         "delete from pending where discord_id=$1 returning *",
@@ -139,40 +139,42 @@ pub(crate) async fn insert_member_from_pending(
     )
     .fetch_one(pool)
     .await?;
-    sqlx::query!(
-        "insert into members values ($1, $2, $3, $4, $5)",
+    let m = sqlx::query_as!(
+        Member,
+        "insert into members values ($1, $2, $3, $4, $5) returning *",
         id,
         p.shortcode,
         nickname,
         p.realname,
         fresher
     )
-    .execute(pool)
+    .fetch_one(pool)
     .await?;
-    Ok(p)
+    Ok(m)
 }
 
 /// Add member entry to members table from manual table
 pub(crate) async fn insert_member_from_manual(
     pool: &sqlx::PgPool,
     id: i64,
-) -> Result<ManualMember, Error> {
-    let m = sqlx::query_as!(
+) -> Result<Member, Error> {
+    let mm = sqlx::query_as!(
         ManualMember,
         "delete from manual where discord_id=$1 returning *",
         id
     )
     .fetch_one(pool)
     .await?;
-    sqlx::query!(
-        "insert into members values ($1, $2, $3, $4, $5)",
+    let m = sqlx::query_as!(
+        Member,
+        "insert into members values ($1, $2, $3, $4, $5) returning *",
         id,
-        m.shortcode,
-        m.nickname,
-        m.realname,
-        m.fresher
+        mm.shortcode,
+        mm.nickname,
+        mm.realname,
+        mm.fresher
     )
-    .execute(pool)
+    .fetch_one(pool)
     .await?;
     Ok(m)
 }

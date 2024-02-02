@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into members values ($1, $2, $3, $4, $5) returning *",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "discord_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "shortcode",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "realname",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "fresher",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar",
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2a25f494fc244e877e4ade7b1d0c422cbea9263d74bae688d5dc9684bc855d4d"
+}
