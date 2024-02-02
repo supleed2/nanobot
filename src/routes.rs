@@ -1,4 +1,4 @@
-use crate::PendingMember;
+use crate::{db, PendingMember};
 use axum::{http::StatusCode, response::IntoResponse, Json};
 
 #[tracing::instrument]
@@ -29,9 +29,9 @@ pub(crate) async fn verify(
                 };
 
                 // Delete from pending if exists
-                let _ = crate::db::delete_pending_by_id(&pool, id).await;
+                let _ = db::delete_pending_by_id(&pool, id).await;
 
-                match crate::db::insert_pending(
+                match db::insert_pending(
                     &pool,
                     PendingMember {
                         discord_id: id,

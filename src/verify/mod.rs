@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::{db, Data, Error};
 use poise::serenity_prelude::{
     self as serenity, CacheHttp, CreateActionRow, CreateButton, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -73,7 +73,7 @@ pub(crate) async fn start(
     init: bool,
 ) -> Result<(), Error> {
     // Check if user is already verified
-    if let Some(member) = crate::db::get_member_by_id(&data.db, m.user.id.into()).await? {
+    if let Some(member) = db::get_member_by_id(&data.db, m.user.id.into()).await? {
         let mut mm = m.member.clone().unwrap();
         apply_role(ctx, &mut mm, data.member).await?;
         if member.fresher {

@@ -1,4 +1,4 @@
-use crate::{db, ACtx, Error, Member};
+use crate::{db, verify, ACtx, Error, Member};
 use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
@@ -24,8 +24,8 @@ pub(crate) async fn delete_member(
     tracing::info!("{} {}", ctx.author().name, id.user.name);
     if db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         if remove_roles.unwrap_or(true) {
-            crate::verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
-            crate::verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
         }
         ctx.say(format!("Successfully deleted member info for {id}"))
             .await?
@@ -198,9 +198,9 @@ pub(crate) async fn add_member(
         },
     )
     .await?;
-    crate::verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
+    verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
     if fresher {
-        crate::verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+        verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
     }
     ctx.say(format!("Member added: {id}")).await?;
     Ok(())

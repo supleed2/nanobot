@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::{db, ea, verify, Data, Error, Member};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -68,10 +68,10 @@ pub(crate) async fn membership_2(
     fresher: bool,
 ) -> Result<(), Error> {
     // Delete from pending if exists
-    let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.into()).await;
+    let _ = db::delete_pending_by_id(&data.db, m.user.id.into()).await;
 
     // Delete from manual if exists
-    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
+    let _ = db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
     m.create_response(
         &ctx.http,
@@ -101,7 +101,7 @@ pub(crate) async fn membership_3(
             shortcode,
             nickname,
         }) => {
-            let members = match crate::ea::get_members_list(&data.ea_key, &data.ea_url).await {
+            let members = match ea::get_members_list(&data.ea_key, &data.ea_url).await {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!("{e}");
@@ -135,9 +135,9 @@ pub(crate) async fn membership_3(
                 return Ok(());
             };
             let realname = format!("{} {}", member.first_name, member.surname);
-            if crate::db::insert_member(
+            if db::insert_member(
                 &data.db,
-                crate::Member {
+                Member {
                     discord_id: m.user.id.into(),
                     shortcode,
                     nickname: nickname.clone(),
@@ -155,9 +155,9 @@ pub(crate) async fn membership_3(
                     if fresher { " (fresher)" } else { "" }
                 );
                 let mut mm = m.member.clone().unwrap();
-                crate::verify::apply_role(ctx, &mut mm, data.member).await?;
+                verify::apply_role(ctx, &mut mm, data.member).await?;
                 if fresher {
-                    crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                    verify::apply_role(ctx, &mut mm, data.fresher).await?;
                 }
                 m.create_response(
                     &ctx.http,
@@ -191,10 +191,9 @@ pub(crate) async fn membership_3(
                     .await?;
                 let _ = mm.remove_role(&ctx.http, data.non_member).await;
                 if mm.roles.contains(&data.old_member) {
-                    crate::verify::remove_role(ctx, &mut mm, data.old_member).await?;
+                    verify::remove_role(ctx, &mut mm, data.old_member).await?;
                 } else {
-                    crate::verify::welcome_user(&ctx.http, &data.gn_ch_id, &m.user, fresher)
-                        .await?;
+                    verify::welcome_user(&ctx.http, &data.gn_ch_id, &m.user, fresher).await?;
                 }
                 return Ok(());
             }

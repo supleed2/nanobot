@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::{db, verify, Data, Error};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -55,7 +55,7 @@ pub(crate) async fn login_2(
     m: &serenity::ComponentInteraction,
     data: &Data,
 ) -> Result<(), Error> {
-    match crate::db::get_pending_by_id(&data.db, m.user.id.into()).await {
+    match db::get_pending_by_id(&data.db, m.user.id.into()).await {
         Err(e) => {
             tracing::error!("{e}");
             m.create_response(
@@ -196,15 +196,10 @@ pub(crate) async fn login_6(
     match Nickname::parse(m.data.clone()) {
         Ok(Nickname { nickname }) => {
             // Delete from manual if exists
-            let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
+            let _ = db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
-            match crate::db::insert_member_from_pending(
-                &data.db,
-                m.user.id.into(),
-                &nickname,
-                fresher,
-            )
-            .await
+            match db::insert_member_from_pending(&data.db, m.user.id.into(), &nickname, fresher)
+                .await
             {
                 Ok(p) => {
                     tracing::info!(
@@ -214,9 +209,9 @@ pub(crate) async fn login_6(
                         if fresher { " (fresher)" } else { "" }
                     );
                     let mut mm = m.member.clone().unwrap();
-                    crate::verify::apply_role(ctx, &mut mm, data.member).await?;
+                    verify::apply_role(ctx, &mut mm, data.member).await?;
                     if fresher {
-                        crate::verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                        verify::apply_role(ctx, &mut mm, data.fresher).await?;
                     }
                     let msg = if fresher {
                         "Congratulations, you have completed verification and now \
@@ -251,10 +246,9 @@ pub(crate) async fn login_6(
                         .await?;
                     let _ = mm.remove_role(&ctx.http, data.non_member).await;
                     if mm.roles.contains(&data.old_member) {
-                        crate::verify::remove_role(ctx, &mut mm, data.old_member).await?;
+                        verify::remove_role(ctx, &mut mm, data.old_member).await?;
                     } else {
-                        crate::verify::welcome_user(&ctx.http, &data.gn_ch_id, &m.user, fresher)
-                            .await?;
+                        verify::welcome_user(&ctx.http, &data.gn_ch_id, &m.user, fresher).await?;
                     }
                 }
                 Err(e) => {

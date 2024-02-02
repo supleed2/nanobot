@@ -1,4 +1,4 @@
-use crate::{Data, Error};
+use crate::{db, verify, Data, Error, ManualMember};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -74,7 +74,7 @@ pub(crate) async fn manual_2(
     fresher: bool,
 ) -> Result<(), Error> {
     // Delete from manual if exists
-    let _ = crate::db::delete_manual_by_id(&data.db, m.user.id.into()).await;
+    let _ = db::delete_manual_by_id(&data.db, m.user.id.into()).await;
 
     m.create_response(
         &ctx.http,
@@ -119,7 +119,7 @@ pub(crate) async fn manual_3(
             }
 
             // Delete from pending if exists
-            let _ = crate::db::delete_pending_by_id(&data.db, m.user.id.into()).await?;
+            let _ = db::delete_pending_by_id(&data.db, m.user.id.into()).await?;
 
             let prompt_sent = data
                 .au_ch_id
@@ -153,9 +153,9 @@ pub(crate) async fn manual_3(
                 .await
                 .is_ok();
 
-            let inserted = crate::db::insert_manual(
+            let inserted = db::insert_manual(
                 &data.db,
-                crate::ManualMember {
+                ManualMember {
                     discord_id: m.user.id.into(),
                     shortcode,
                     nickname,
@@ -223,7 +223,7 @@ pub(crate) async fn manual_4(
     let mut member = data.server.member(&ctx.http, &user).await?;
 
     if verify {
-        match crate::db::insert_member_from_manual(&data.db, user.id.into()).await {
+        match db::insert_member_from_manual(&data.db, user.id.into()).await {
             Ok(mm) => {
                 let fresher = crate::db::get_member_by_id(&data.db, user.id.into())
                     .await?
@@ -235,9 +235,9 @@ pub(crate) async fn manual_4(
                     user.id,
                     if fresher { " (fresher)" } else { "" }
                 );
-                crate::verify::apply_role(ctx, &mut member, data.member).await?;
                 if fresher {
-                    crate::verify::apply_role(ctx, &mut member, data.fresher).await?;
+                verify::apply_role(ctx, &mut member, data.member).await?;
+                    verify::apply_role(ctx, &mut member, data.fresher).await?;
                 }
                 m.create_response(
                     &ctx.http,
@@ -259,9 +259,9 @@ pub(crate) async fn manual_4(
                 .await?;
                 let _ = member.remove_role(&ctx.http, data.non_member).await;
                 if member.roles.contains(&data.old_member) {
-                    crate::verify::remove_role(ctx, &mut member, data.old_member).await?;
+                    verify::remove_role(ctx, &mut member, data.old_member).await?;
                 } else {
-                    crate::verify::welcome_user(&ctx.http, &data.gn_ch_id, &user, fresher).await?;
+                    verify::welcome_user(&ctx.http, &data.gn_ch_id, &user, fresher).await?;
                 }
             }
             Err(e) => {
@@ -277,7 +277,7 @@ pub(crate) async fn manual_4(
             }
         }
     } else {
-        crate::db::delete_manual_by_id(&data.db, user.id.into()).await?;
+        db::delete_manual_by_id(&data.db, user.id.into()).await?;
         tracing::info!("{} ({}) denied via manual", user.name, user.id);
         m.create_response(
             &ctx.http,

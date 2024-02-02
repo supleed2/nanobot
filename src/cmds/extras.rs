@@ -1,4 +1,4 @@
-use crate::{db, ACtx, Error, Gaijin};
+use crate::{db, verify, ACtx, Error, Gaijin};
 use poise::{
     serenity_prelude::{self as serenity, CreateAttachment, CreateMessage},
     Modal,
@@ -27,7 +27,7 @@ pub(crate) async fn delete_gaijin(
     tracing::info!("{} {}", ctx.author().name, id.user.name);
     if db::delete_gaijin_by_id(&ctx.data().db, id.user.id.into()).await? {
         if remove_roles.unwrap_or(true) {
-            crate::verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().gaijin).await?;
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().gaijin).await?;
         }
         ctx.say(format!("Successfully deleted gaijin info for {id}"))
             .await?
@@ -156,7 +156,7 @@ pub(crate) async fn add_gaijin(
         },
     )
     .await?;
-    crate::verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().gaijin).await?;
+    verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().gaijin).await?;
     ctx.say(format!("Gaijin added: {id}")).await?;
     Ok(())
 }
