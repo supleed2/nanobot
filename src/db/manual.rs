@@ -41,7 +41,7 @@ pub(crate) async fn insert_manual(pool: &sqlx::PgPool, m: ManualMember) -> Resul
     sqlx::query!(
         "insert into manual values ($1,$2,$3,$4,$5)",
         m.discord_id,
-        m.shortcode,
+        m.shortcode.to_lowercase(),
         m.nickname,
         m.realname,
         m.fresher

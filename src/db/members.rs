@@ -115,7 +115,7 @@ pub(crate) async fn insert_member(pool: &sqlx::PgPool, m: Member) -> Result<(), 
     sqlx::query!(
         "insert into members values ($1, $2, $3, $4, $5)",
         m.discord_id,
-        m.shortcode,
+        m.shortcode.to_lowercase(),
         m.nickname,
         m.realname,
         m.fresher

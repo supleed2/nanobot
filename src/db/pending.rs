@@ -43,7 +43,7 @@ pub(crate) async fn insert_pending(pool: &sqlx::PgPool, p: PendingMember) -> Res
     sqlx::query!(
         "insert into pending values ($1, $2, $3)",
         p.discord_id,
-        p.shortcode,
+        p.shortcode.to_lowercase(),
         p.realname
     )
     .execute(pool)
