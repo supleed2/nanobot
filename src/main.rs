@@ -72,7 +72,7 @@ macro_rules! secret {
 
 #[shuttle_runtime::main]
 async fn nanobot(
-    #[shuttle_secrets::Secrets] secret_store: shuttle_secrets::SecretStore,
+    #[shuttle_runtime::Secrets] secret_store: shuttle_runtime::SecretStore,
     #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
 ) -> Result<service::NanoBot, shuttle_runtime::Error> {
     // Set Up Tracing Subscriber
