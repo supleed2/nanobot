@@ -208,7 +208,7 @@ fn init_tracing_subscriber() {
             ts::fmt::layer()
                 .without_time()
                 .with_filter(ts::EnvFilter::new(
-                    "info,nano=info,shuttle=trace,serenity=off",
+                    "info,nano=info,shuttle=info,serenity=off",
                 )),
         )
         .with(
