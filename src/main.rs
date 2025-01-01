@@ -192,6 +192,7 @@ async fn event_handler(
                 "membership_3n" => verify::membership_3(ctx, m, data, false).await?,
                 "manual_3f" => verify::manual_3(ctx, m, data, true).await?,
                 "manual_3n" => verify::manual_3(ctx, m, data, false).await?,
+                id if id.starts_with("manual_5-") => verify::manual_5(ctx, m, data, id).await?,
                 _ => {}
             }
         }
