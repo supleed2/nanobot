@@ -11,20 +11,20 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.86"
-axum = "0.7.5"
+anyhow = "1.0.95"
+axum = "0.7.9"
 indoc = "2.0.5"
 poise = "0.6.1"
-reqwest = { version = "0.12.5", features = ["json"] }
-serde = { version = "1.0.204", features = ["derive"] }
-shuttle-runtime = { version = "0.46.0", default-features = false }
-shuttle-shared-db = { version = "0.46.0", features = ["postgres", "sqlx"] }
-sqlx = { version = "0.7.4", features = [
+reqwest = { version = "0.12.12", features = ["json"] }
+serde = { version = "1.0.217", features = ["derive"] }
+shuttle-runtime = { version = "0.49.0", default-features = false }
+shuttle-shared-db = { version = "0.49.0", features = ["postgres", "sqlx"] }
+sqlx = { version = "0.8.2", features = [
 	"macros",
 	"postgres",
 	"runtime-tokio-native-tls",
 ] }
-tokio = "1.38.0"
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "time"] }
+tokio = "1.42.0"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "time"] }
 url = "2.5.2"
