@@ -156,6 +156,7 @@ pub(crate) async fn add_gaijin(
         },
     )
     .await?;
+    verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().non_member).await?;
     verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().gaijin).await?;
     ctx.say(format!("Gaijin added: {id}")).await?;
     Ok(())

@@ -198,6 +198,7 @@ pub(crate) async fn add_member(
         },
     )
     .await?;
+    verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().non_member).await?;
     verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
     if fresher {
         verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
