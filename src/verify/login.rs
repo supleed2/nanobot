@@ -98,7 +98,7 @@ pub(crate) async fn login_2(
             )
             .await?;
         }
-    };
+    }
     Ok(())
 }
 
@@ -268,6 +268,6 @@ pub(crate) async fn login_6(
         Err(e) => {
             tracing::error!("{e}");
         }
-    };
+    }
     Ok(())
 }

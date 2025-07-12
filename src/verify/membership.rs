@@ -88,6 +88,7 @@ pub(crate) async fn membership_2(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 #[tracing::instrument(skip_all)]
 pub(crate) async fn membership_3(
     ctx: &serenity::Context,
@@ -199,7 +200,7 @@ pub(crate) async fn membership_3(
             }
         }
         Err(e) => tracing::error!("{e}"),
-    };
+    }
     m.create_response(
         &ctx.http,
         CreateInteractionResponse::Message(

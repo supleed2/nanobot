@@ -188,7 +188,7 @@ pub(crate) async fn manual_3(
             return Ok(());
         }
         Err(e) => tracing::error!("{e}"),
-    };
+    }
     m.create_response(
         &ctx.http,
         CreateInteractionResponse::Message(

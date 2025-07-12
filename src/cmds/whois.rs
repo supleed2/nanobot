@@ -104,6 +104,6 @@ pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result
             )))
             .await?;
         }
-    };
+    }
     Ok(())
 }

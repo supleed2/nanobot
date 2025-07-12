@@ -115,7 +115,7 @@ pub(crate) async fn start(
             },
         )
         .await?;
-    };
+    }
     Ok(())
 }
 
