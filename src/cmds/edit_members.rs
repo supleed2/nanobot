@@ -168,7 +168,9 @@ pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> 
         .await?;
     let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
     while let Some(Ok(m)) = members.next().await {
-        let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
+        if m.roles.contains(&ctx.data().fresher) {
+            let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
+        }
     }
     ctx.say("Roles removed").await?;
     Ok(())
