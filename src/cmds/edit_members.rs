@@ -1,4 +1,4 @@
-use crate::{db, ACtx, Error};
+use crate::{db, verify, ACtx, Error};
 use poise::{
     serenity_prelude::{self as serenity, CreateEmbed, CreateMessage},
     CreateReply,
@@ -119,11 +119,16 @@ pub(crate) async fn edit_member_realname(
 #[poise::command(slash_command, rename = "fresher")]
 pub(crate) async fn edit_member_fresher(
     ctx: ACtx<'_>,
-    id: serenity::Member,
+    mut id: serenity::Member,
     fresher: bool,
 ) -> Result<(), Error> {
     tracing::info!("{} {} {fresher}", ctx.author().name, id.user.name);
     if db::edit_member_fresher(&ctx.data().db, id.user.id.into(), fresher).await? {
+        if fresher {
+            verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+        } else {
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+        }
         ctx.say(format!("{id} Fresher status updated to {fresher}"))
             .await?;
     } else {
