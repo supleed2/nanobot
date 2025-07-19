@@ -94,9 +94,7 @@ async fn nanobot(
             "/verify",
             axum::routing::post({
                 let pool = pool.clone();
-                let key = secret_store
-                    .get("VERIFY_KEY")
-                    .context("VERIFY_KEY not found")?;
+                let key = secret!("VERIFY_KEY", secret_store);
                 move |body| routes::verify(pool, body, key)
             }),
         );
