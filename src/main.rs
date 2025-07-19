@@ -27,7 +27,7 @@ struct Data {
 type ACtx<'a> = poise::ApplicationContext<'a, Data, Error>;
 type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 struct Member {
     discord_id: i64,
     shortcode: String,
@@ -36,14 +36,14 @@ struct Member {
     fresher: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 struct PendingMember {
     discord_id: i64,
     shortcode: String,
     realname: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 struct ManualMember {
     discord_id: i64,
     shortcode: String,
@@ -52,7 +52,7 @@ struct ManualMember {
     fresher: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 struct Gaijin {
     discord_id: i64,
     name: String,
@@ -89,6 +89,14 @@ async fn nanobot(
 
     // Build Axum Router
     let router = axum::Router::new()
+        .route(
+            "/export",
+            axum::routing::get({
+                let pool = pool.clone();
+                let export_key = secret!("EXPORT_KEY", secret_store);
+                |key| routes::export(pool, key, export_key)
+            }),
+        )
         .route("/up", axum::routing::get(routes::up))
         .route(
             "/verify",
