@@ -27,7 +27,7 @@ struct Data {
 type ACtx<'a> = poise::ApplicationContext<'a, Data, Error>;
 type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 struct Member {
     discord_id: i64,
     shortcode: String,
@@ -36,14 +36,14 @@ struct Member {
     fresher: bool,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 struct PendingMember {
     discord_id: i64,
     shortcode: String,
     realname: String,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 struct ManualMember {
     discord_id: i64,
     shortcode: String,
@@ -52,7 +52,7 @@ struct ManualMember {
     fresher: bool,
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 struct Gaijin {
     discord_id: i64,
     name: String,
@@ -94,7 +94,15 @@ async fn nanobot(
             axum::routing::get({
                 let pool = pool.clone();
                 let export_key = secret!("EXPORT_KEY", secret_store);
-                |key| routes::export(pool, key, export_key)
+                |query| routes::export(pool, query, export_key)
+            }),
+        )
+        .route(
+            "/import",
+            axum::routing::post({
+                let pool = pool.clone();
+                let import_key = secret!("IMPORT_KEY", secret_store);
+                |body| routes::import(pool, body, import_key)
             }),
         )
         .route("/up", axum::routing::get(routes::up))
@@ -102,8 +110,8 @@ async fn nanobot(
             "/verify",
             axum::routing::post({
                 let pool = pool.clone();
-                let key = secret!("VERIFY_KEY", secret_store);
-                move |body| routes::verify(pool, body, key)
+                let verify_key = secret!("VERIFY_KEY", secret_store);
+                move |body| routes::verify(pool, body, verify_key)
             }),
         );
 

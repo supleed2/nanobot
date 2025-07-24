@@ -1,6 +1,6 @@
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct Member {
+pub(crate) struct Member {
     pub first_name: String,
     pub surname: String,
     #[serde(rename = "CID")]

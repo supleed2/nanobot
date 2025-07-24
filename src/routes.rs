@@ -6,8 +6,8 @@ pub(crate) struct Key {
     key: Option<String>,
 }
 
-#[derive(serde::Serialize)]
-struct Export {
+#[derive(serde::Deserialize, serde::Serialize)]
+struct Db {
     pending: Vec<PendingMember>,
     manual: Vec<ManualMember>,
     members: Vec<Member>,
@@ -33,7 +33,7 @@ pub(crate) async fn export(
         return (StatusCode::INTERNAL_SERVER_ERROR, "DB request failed").into_response();
     };
 
-    let export = Export {
+    let export = Db {
         pending,
         manual,
         members,
@@ -41,6 +41,36 @@ pub(crate) async fn export(
     };
 
     (StatusCode::OK, Json(export)).into_response()
+}
+
+#[derive(serde::Deserialize)]
+pub(crate) struct Import {
+    db: Db,
+    key: String,
+}
+
+#[tracing::instrument(skip_all)]
+pub(crate) async fn import(
+    _pool: sqlx::PgPool,
+    import: Option<Json<Import>>,
+    expected_key: String,
+) -> impl IntoResponse {
+    let Some(Json(Import { db, key })) = import else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+
+    if key != expected_key {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+
+    format!(
+        "Got {} pending, {} manual, {} members, {} extras",
+        db.pending.len(),
+        db.manual.len(),
+        db.members.len(),
+        db.extras.len()
+    )
+    .into_response()
 }
 
 #[tracing::instrument(skip_all)]
@@ -60,12 +90,12 @@ pub(crate) struct Verify {
 pub(crate) async fn verify(
     pool: sqlx::PgPool,
     payload: Option<Json<Verify>>,
-    key: String,
+    expected_key: String,
 ) -> impl IntoResponse {
     match payload {
         None => (StatusCode::BAD_REQUEST, "Invalid request body").into_response(),
         Some(Json(verify)) => {
-            if verify.key == key {
+            if verify.key == expected_key {
                 let Ok(id) = verify.id.parse::<i64>() else {
                     return (StatusCode::BAD_REQUEST, "Invalid request body").into_response();
                 };
