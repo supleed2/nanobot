@@ -83,7 +83,7 @@ pub(crate) async fn get_all_gaijin(ctx: ACtx<'_>) -> Result<(), Error> {
     }
 }
 
-/// Unreachable, used to create get_gaijin command folder
+/// Unreachable, used to create `get_gaijin` command folder
 #[allow(clippy::unused_async)]
 #[poise::command(slash_command, subcommands("get_gaijin_by_id", "get_gaijin_by_name"))]
 pub(crate) async fn get_gaijin(_ctx: ACtx<'_>) -> Result<(), Error> {
@@ -162,7 +162,7 @@ pub(crate) async fn add_gaijin(
     Ok(())
 }
 
-/// Unreachable, used to create edit_gaijin command folder
+/// Unreachable, used to create `edit_gaijin` command folder
 #[allow(clippy::unused_async)]
 #[poise::command(
     slash_command,

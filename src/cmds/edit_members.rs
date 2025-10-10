@@ -46,7 +46,7 @@ pub(crate) async fn nick(
     Ok(())
 }
 
-/// Unreachable, used to create edit_member command folder
+/// Unreachable, used to create `edit_member` command folder
 #[allow(clippy::unused_async)]
 #[poise::command(
     slash_command,
