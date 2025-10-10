@@ -88,3 +88,40 @@ pub(crate) async fn setup(
     }
     Ok(())
 }
+
+pub(crate) fn all_commands() -> Vec<poise::Command<Data, Error>> {
+    vec![
+        cmds(),
+        setup(),
+        count_members(),
+        delete_member(),
+        get_all_members(),
+        get_member(),
+        add_member(),
+        insert_member_from_pending(),
+        insert_member_from_manual(),
+        nick(),
+        edit_member(),
+        refresh_non_members(),
+        set_members_non_fresher(),
+        count_pending(),
+        delete_pending(),
+        get_all_pending(),
+        get_pending(),
+        add_pending(),
+        delete_all_pending(),
+        count_manual(),
+        delete_manual(),
+        get_all_manual(),
+        get_manual(),
+        add_manual(),
+        delete_all_manual(),
+        whois(),
+        count_gaijin(),
+        delete_gaijin(),
+        get_all_gaijin(),
+        get_gaijin(),
+        add_gaijin(),
+        edit_gaijin(),
+    ]
+}
