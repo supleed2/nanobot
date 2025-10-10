@@ -60,12 +60,12 @@ struct Gaijin {
     university: String,
 }
 
-macro_rules! secret {
-    ($s: literal, $ss: ident) => {
-        $ss.get($s).context(format!("{} not found", $s))?
+macro_rules! var {
+    ($s: literal) => {
+        std::env::var($s).context(format!("{} not found", $s))?
     };
-    ($s: literal, $ss: ident, $t: ty) => {
-        secret!($s, $ss)
+    ($s: literal, $t: ty) => {
+        var!($s)
             .parse::<$t>()
             .context(format!("{} not valid {}", $s, stringify!($t)))?
     };
@@ -73,7 +73,6 @@ macro_rules! secret {
 
 #[shuttle_runtime::main]
 async fn nanobot(
-    #[shuttle_runtime::Secrets] secret_store: shuttle_runtime::SecretStore,
     #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
 ) -> Result<service::NanoBot, shuttle_runtime::Error> {
     // Set Up Tracing Subscriber
@@ -86,7 +85,7 @@ async fn nanobot(
         .map_err(shuttle_runtime::CustomError::new)?;
 
     // Load token
-    let token = secret!("DISCORD_TOKEN", secret_store);
+    let token = var!("DISCORD_TOKEN");
 
     // Build Axum Router
     let router = axum::Router::new()
@@ -94,7 +93,7 @@ async fn nanobot(
             "/export",
             axum::routing::get({
                 let pool = pool.clone();
-                let export_key = secret!("EXPORT_KEY", secret_store);
+                let export_key = var!("EXPORT_KEY");
                 |query| routes::export(pool, query, export_key)
             }),
         )
@@ -102,7 +101,7 @@ async fn nanobot(
             "/import",
             axum::routing::post({
                 let pool = pool.clone();
-                let import_key = secret!("IMPORT_KEY", secret_store);
+                let import_key = var!("IMPORT_KEY");
                 |body| routes::import(pool, body, import_key)
             }),
         )
@@ -111,7 +110,7 @@ async fn nanobot(
             "/verify",
             axum::routing::post({
                 let pool = pool.clone();
-                let verify_key = secret!("VERIFY_KEY", secret_store);
+                let verify_key = var!("VERIFY_KEY");
                 move |body| routes::verify(pool, body, verify_key)
             }),
         );
@@ -129,17 +128,17 @@ async fn nanobot(
                     "Verifying members since 2023",
                 )));
                 Ok(Data {
-                    au_ch_id: secret!("AU_CHANNEL_ID", secret_store, _),
+                    au_ch_id: var!("AU_CHANNEL_ID", _),
                     db: pool,
-                    ea_key: secret!("EA_API_KEY", secret_store),
-                    ea_url: secret!("EA_API_URL", secret_store),
-                    fresher: secret!("FRESHER_ID", secret_store, _),
-                    gaijin: secret!("GAIJIN_ID", secret_store, _),
-                    gn_ch_id: secret!("GN_CHANNEL_ID", secret_store, _),
-                    member: secret!("MEMBER_ID", secret_store, _),
-                    non_member: secret!("NON_MEMBER_ID", secret_store, _),
-                    old_member: secret!("OLD_MEMBER_ID", secret_store, _),
-                    server: secret!("SERVER_ID", secret_store, _),
+                    ea_key: var!("EA_API_KEY"),
+                    ea_url: var!("EA_API_URL"),
+                    fresher: var!("FRESHER_ID", _),
+                    gaijin: var!("GAIJIN_ID", _),
+                    gn_ch_id: var!("GN_CHANNEL_ID", _),
+                    member: var!("MEMBER_ID", _),
+                    non_member: var!("NON_MEMBER_ID", _),
+                    old_member: var!("OLD_MEMBER_ID", _),
+                    server: var!("SERVER_ID", _),
                 })
             })
         })
