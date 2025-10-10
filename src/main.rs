@@ -72,11 +72,14 @@ macro_rules! var {
 }
 
 #[shuttle_runtime::main]
-async fn nanobot(
-    #[shuttle_shared_db::Postgres] pool: sqlx::PgPool,
-) -> Result<service::NanoBot, shuttle_runtime::Error> {
+async fn nanobot() -> Result<service::NanoBot, shuttle_runtime::Error> {
     // Set Up Tracing Subscriber
     nano::init_tracing_subscriber();
+
+    // Create connection pool to Postgres DB
+    let pool = sqlx::PgPool::connect(&var!("DATABASE_URL"))
+        .await
+        .map_err(shuttle_runtime::CustomError::new)?;
 
     // Run SQLx Migrations
     sqlx::migrate!()
