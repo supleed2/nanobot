@@ -73,6 +73,9 @@ macro_rules! var {
 
 #[shuttle_runtime::main]
 async fn nanobot() -> Result<service::NanoBot, shuttle_runtime::Error> {
+    // Load environment variables from .env file
+    dotenvy::dotenv().ok();
+
     // Set Up Tracing Subscriber
     nano::init_tracing_subscriber();
 
@@ -114,7 +117,7 @@ async fn nanobot() -> Result<service::NanoBot, shuttle_runtime::Error> {
             axum::routing::post({
                 let pool = pool.clone();
                 let verify_key = var!("VERIFY_KEY");
-                move |body| routes::verify(pool, body, verify_key)
+                |body| routes::verify(pool, body, verify_key)
             }),
         );
 
