@@ -2,7 +2,7 @@ use crate::{var, verify, Data, Error};
 use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, FullEvent};
 
-pub(crate) fn nanobot(pool: sqlx::PgPool) -> Result<poise::Framework<Data, Error>, Error> {
+pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, Error>, Error> {
     // Build Bot Data
     let data = Data {
         au_ch_id: var!("AU_CHANNEL_ID", _),
@@ -96,6 +96,19 @@ async fn event_handler(
         _ => {}
     }
     Ok(())
+}
+
+pub(crate) async fn init_db(db_url: &str) -> Result<sqlx::SqlitePool, Error> {
+    use sqlx::migrate::MigrateDatabase;
+
+    if !sqlx::Sqlite::database_exists(db_url).await? {
+        sqlx::Sqlite::create_database(db_url).await?;
+    }
+
+    let pool = sqlx::SqlitePool::connect(db_url).await?;
+    sqlx::migrate!().run(&pool).await?;
+
+    Ok(pool)
 }
 
 pub(crate) fn init_tracing_subscriber() {

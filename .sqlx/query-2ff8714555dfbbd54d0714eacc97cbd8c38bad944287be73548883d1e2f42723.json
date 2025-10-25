@@ -1,19 +1,19 @@
 {
-  "db_name": "PostgreSQL",
+  "db_name": "SQLite",
   "query": "select count(*) as \"i64!\" from gaijin",
   "describe": {
     "columns": [
       {
-        "ordinal": 0,
         "name": "i64!",
-        "type_info": "Int8"
+        "ordinal": 0,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
-      "Left": []
+      "Right": 0
     },
     "nullable": [
-      null
+      false
     ]
   },
   "hash": "2ff8714555dfbbd54d0714eacc97cbd8c38bad944287be73548883d1e2f42723"

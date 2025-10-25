@@ -2,7 +2,7 @@ use crate::{db, var, Error, Gaijin, ManualMember, Member, PendingMember};
 use anyhow::Context as _;
 use axum::{extract::Query, http::StatusCode, response::IntoResponse, Json};
 
-pub(crate) fn router(pool: sqlx::PgPool) -> Result<axum::Router, Error> {
+pub(crate) fn router(pool: sqlx::SqlitePool) -> Result<axum::Router, Error> {
     let export_pool = pool.clone();
     let export_key = var!("EXPORT_KEY");
     let export_handler = |query| export(export_pool, query, export_key);
@@ -37,7 +37,7 @@ struct Db {
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn export(
-    pool: sqlx::PgPool,
+    pool: sqlx::SqlitePool,
     key: Query<Key>,
     expected_key: String,
 ) -> impl IntoResponse {
@@ -72,7 +72,7 @@ pub(crate) struct Import {
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn import(
-    _pool: sqlx::PgPool,
+    _pool: sqlx::SqlitePool,
     import: Option<Json<Import>>,
     expected_key: String,
 ) -> impl IntoResponse {
@@ -109,7 +109,7 @@ pub(crate) struct Verify {
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn verify(
-    pool: sqlx::PgPool,
+    pool: sqlx::SqlitePool,
     payload: Option<Json<Verify>>,
     expected_key: String,
 ) -> impl IntoResponse {

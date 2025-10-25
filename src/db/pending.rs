@@ -1,7 +1,7 @@
 use crate::{Error, PendingMember};
 
 /// Get count of entries in pending table
-pub(crate) async fn count_pending(pool: &sqlx::PgPool) -> Result<i64, Error> {
+pub(crate) async fn count_pending(pool: &sqlx::SqlitePool) -> Result<i64, Error> {
     Ok(sqlx::query!("select count(*) as \"i64!\" from pending")
         .fetch_one(pool)
         .await?
@@ -9,7 +9,7 @@ pub(crate) async fn count_pending(pool: &sqlx::PgPool) -> Result<i64, Error> {
 }
 
 /// Delete pending by Discord ID
-pub(crate) async fn delete_pending_by_id(pool: &sqlx::PgPool, id: i64) -> Result<bool, Error> {
+pub(crate) async fn delete_pending_by_id(pool: &sqlx::SqlitePool, id: i64) -> Result<bool, Error> {
     let r = sqlx::query!("delete from pending where discord_id=$1", id)
         .execute(pool)
         .await?
@@ -18,7 +18,7 @@ pub(crate) async fn delete_pending_by_id(pool: &sqlx::PgPool, id: i64) -> Result
 }
 
 /// Get all entries in pending table
-pub(crate) async fn get_all_pending(pool: &sqlx::PgPool) -> Result<Vec<PendingMember>, Error> {
+pub(crate) async fn get_all_pending(pool: &sqlx::SqlitePool) -> Result<Vec<PendingMember>, Error> {
     Ok(sqlx::query_as!(PendingMember, "select * from pending")
         .fetch_all(pool)
         .await?)
@@ -26,7 +26,7 @@ pub(crate) async fn get_all_pending(pool: &sqlx::PgPool) -> Result<Vec<PendingMe
 
 /// Get pending entry by Discord ID
 pub(crate) async fn get_pending_by_id(
-    pool: &sqlx::PgPool,
+    pool: &sqlx::SqlitePool,
     id: i64,
 ) -> Result<Option<PendingMember>, Error> {
     Ok(sqlx::query_as!(
@@ -39,11 +39,12 @@ pub(crate) async fn get_pending_by_id(
 }
 
 /// Add pending entry to pending table
-pub(crate) async fn insert_pending(pool: &sqlx::PgPool, p: PendingMember) -> Result<(), Error> {
+pub(crate) async fn insert_pending(pool: &sqlx::SqlitePool, p: PendingMember) -> Result<(), Error> {
+    let shortcode = p.shortcode.to_lowercase();
     sqlx::query!(
         "insert into pending values ($1, $2, $3)",
         p.discord_id,
-        p.shortcode.to_lowercase(),
+        shortcode,
         p.realname
     )
     .execute(pool)
@@ -52,7 +53,7 @@ pub(crate) async fn insert_pending(pool: &sqlx::PgPool, p: PendingMember) -> Res
 }
 
 /// Delete all entries in pending table
-pub(crate) async fn delete_all_pending(pool: &sqlx::PgPool) -> Result<u64, Error> {
+pub(crate) async fn delete_all_pending(pool: &sqlx::SqlitePool) -> Result<u64, Error> {
     Ok(sqlx::query!("delete from pending")
         .execute(pool)
         .await?

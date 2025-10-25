@@ -14,7 +14,7 @@ mod verify;
 /// Program data, which is stored and accessible in all command invocations
 struct Data {
     au_ch_id: serenity::ChannelId,
-    db: sqlx::PgPool,
+    db: sqlx::SqlitePool,
     ea_key: String,
     ea_url: String,
     fresher: serenity::RoleId,
@@ -84,11 +84,8 @@ async fn main() -> Result<(), Error> {
     // Set Up Tracing Subscriber
     nano::init_tracing_subscriber();
 
-    // Create connection pool to Postgres DB
-    let pool = sqlx::PgPool::connect(&var!("DATABASE_URL")).await?;
-
-    // Run SQLx Migrations
-    sqlx::migrate!().run(&pool).await?;
+    // Connect to SQLite DB and init
+    let pool = nano::init_db(&var!("DATABASE_URL")).await?;
 
     // Bind to all interfaces on port from environment (default to OS selected)
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], var!("PORT", _, 0)));

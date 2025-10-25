@@ -1,19 +1,19 @@
 {
-  "db_name": "PostgreSQL",
+  "db_name": "SQLite",
   "query": "select count(*) as \"i64!\" from members",
   "describe": {
     "columns": [
       {
-        "ordinal": 0,
         "name": "i64!",
-        "type_info": "Int8"
+        "ordinal": 0,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
-      "Left": []
+      "Right": 0
     },
     "nullable": [
-      null
+      false
     ]
   },
   "hash": "b2eb28ae45dbd52f32c437b6f8a99d993c838afa170e67df23e4413bcc27ce92"

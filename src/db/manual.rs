@@ -1,7 +1,7 @@
 use crate::{Error, ManualMember};
 
 /// Get count of entries in manual table
-pub(crate) async fn count_manual(pool: &sqlx::PgPool) -> Result<i64, Error> {
+pub(crate) async fn count_manual(pool: &sqlx::SqlitePool) -> Result<i64, Error> {
     Ok(sqlx::query!("select count(*) as \"i64!\" from manual")
         .fetch_one(pool)
         .await?
@@ -9,7 +9,7 @@ pub(crate) async fn count_manual(pool: &sqlx::PgPool) -> Result<i64, Error> {
 }
 
 /// Delete manual by Discord ID
-pub(crate) async fn delete_manual_by_id(pool: &sqlx::PgPool, id: i64) -> Result<bool, Error> {
+pub(crate) async fn delete_manual_by_id(pool: &sqlx::SqlitePool, id: i64) -> Result<bool, Error> {
     let r = sqlx::query!("delete from manual where discord_id=$1", id)
         .execute(pool)
         .await?
@@ -18,7 +18,7 @@ pub(crate) async fn delete_manual_by_id(pool: &sqlx::PgPool, id: i64) -> Result<
 }
 
 /// Get all entries in manual table
-pub(crate) async fn get_all_manual(pool: &sqlx::PgPool) -> Result<Vec<ManualMember>, Error> {
+pub(crate) async fn get_all_manual(pool: &sqlx::SqlitePool) -> Result<Vec<ManualMember>, Error> {
     Ok(sqlx::query_as!(ManualMember, "select * from manual")
         .fetch_all(pool)
         .await?)
@@ -26,7 +26,7 @@ pub(crate) async fn get_all_manual(pool: &sqlx::PgPool) -> Result<Vec<ManualMemb
 
 /// Get manual entry by Discord ID
 pub(crate) async fn get_manual_by_id(
-    pool: &sqlx::PgPool,
+    pool: &sqlx::SqlitePool,
     id: i64,
 ) -> Result<Option<ManualMember>, Error> {
     Ok(
@@ -37,11 +37,12 @@ pub(crate) async fn get_manual_by_id(
 }
 
 /// Add manual entry to manual table
-pub(crate) async fn insert_manual(pool: &sqlx::PgPool, m: ManualMember) -> Result<(), Error> {
+pub(crate) async fn insert_manual(pool: &sqlx::SqlitePool, m: ManualMember) -> Result<(), Error> {
+    let shortcode = m.shortcode.to_lowercase();
     sqlx::query!(
         "insert into manual values ($1,$2,$3,$4,$5)",
         m.discord_id,
-        m.shortcode.to_lowercase(),
+        shortcode,
         m.nickname,
         m.realname,
         m.fresher
@@ -52,7 +53,7 @@ pub(crate) async fn insert_manual(pool: &sqlx::PgPool, m: ManualMember) -> Resul
 }
 
 /// Delete all entries in manual table
-pub(crate) async fn delete_all_manual(pool: &sqlx::PgPool) -> Result<u64, Error> {
+pub(crate) async fn delete_all_manual(pool: &sqlx::SqlitePool) -> Result<u64, Error> {
     Ok(sqlx::query!("delete from manual")
         .execute(pool)
         .await?

@@ -3,7 +3,7 @@ use poise::{
     serenity_prelude::{self as serenity, CreateAttachment, CreateMessage},
     Modal,
 };
-use std::fmt::Write;
+// use std::fmt::Write;
 
 /// Get the number of entries in the gaijin table
 #[tracing::instrument(skip_all)]
@@ -116,19 +116,19 @@ pub(crate) async fn get_gaijin_by_name(ctx: ACtx<'_>, name: String) -> Result<()
         ))
         .await?;
     } else {
-        let gaijin = db::get_gaijin_by_name_fuzzy(&ctx.data().db, &name, 3).await?;
-        if gaijin.is_empty() {
-            ctx.say(format!("No entry found for name {name}")).await?;
-        } else {
-            ctx.say(format!(
-                "Possible matches for {name}: {}",
-                gaijin.iter().fold(String::new(), |mut s, g| {
-                    write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
-                    s
-                })
-            ))
-            .await?;
-        }
+        // let gaijin = db::get_gaijin_by_name_fuzzy(&ctx.data().db, &name, 3).await?;
+        // if gaijin.is_empty() {
+        ctx.say(format!("No entry found for name {name}")).await?;
+        // } else {
+        //     ctx.say(format!(
+        //         "Possible matches for {name}: {}",
+        //         gaijin.iter().fold(String::new(), |mut s, g| {
+        //             write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
+        //             s
+        //         })
+        //     ))
+        //     .await?;
+        // }
     }
     Ok(())
 }

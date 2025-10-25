@@ -20,7 +20,7 @@ reqwest = { version = "0.12.24", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 sqlx = { version = "0.8.6", features = [
 	"macros",
-	"postgres",
+	"sqlite",
 	"runtime-tokio-native-tls",
 ] }
 tokio = { version = "1.48.0", features = ["full"] }

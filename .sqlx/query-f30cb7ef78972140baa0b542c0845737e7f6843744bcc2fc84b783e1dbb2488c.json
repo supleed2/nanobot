@@ -1,13 +1,10 @@
 {
-  "db_name": "PostgreSQL",
+  "db_name": "SQLite",
   "query": "update members set nickname=$2 where discord_id=$1",
   "describe": {
     "columns": [],
     "parameters": {
-      "Left": [
-        "Int8",
-        "Text"
-      ]
+      "Right": 2
     },
     "nullable": []
   },
