@@ -61,13 +61,16 @@ struct Gaijin {
 }
 
 macro_rules! var {
-    ($s: literal) => {
-        std::env::var($s).context(format!("{} not found", $s))?
+    ($var: literal) => {
+        std::env::var($var).context(format!("{} not found", $var))?
     };
-    ($s: literal, $t: ty) => {
-        var!($s)
-            .parse::<$t>()
-            .context(format!("{} not valid {}", $s, stringify!($t)))?
+    ($var: literal, $type: ty) => {
+        var!($var)
+            .parse::<$type>()
+            .context(format!("{} not valid {}", $var, stringify!($type)))?
+    };
+    ($var: literal, $type: ty, $default: expr) => {
+        var!($var).parse::<$type>().unwrap_or($default)
     };
 }
 
