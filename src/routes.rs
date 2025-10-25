@@ -1,5 +1,26 @@
-use crate::{db, Gaijin, ManualMember, Member, PendingMember};
+use crate::{db, var, Error, Gaijin, ManualMember, Member, PendingMember};
+use anyhow::Context as _;
 use axum::{extract::Query, http::StatusCode, response::IntoResponse, Json};
+
+pub(crate) fn router(pool: sqlx::PgPool) -> Result<axum::Router, Error> {
+    let export_pool = pool.clone();
+    let export_key = var!("EXPORT_KEY");
+    let export_handler = |query| export(export_pool, query, export_key);
+
+    let import_pool = pool.clone();
+    let import_key = var!("IMPORT_KEY");
+    let import_handler = |body| import(import_pool, body, import_key);
+
+    let verify_pool = pool;
+    let verify_key = var!("VERIFY_KEY");
+    let verify_handler = |body| verify(verify_pool, body, verify_key);
+
+    Ok(axum::Router::new()
+        .route("/export", axum::routing::get(export_handler))
+        .route("/import", axum::routing::post(import_handler))
+        .route("/up", axum::routing::get(up))
+        .route("/verify", axum::routing::post(verify_handler)))
+}
 
 #[derive(Debug, serde::Deserialize)]
 pub(crate) struct Key {

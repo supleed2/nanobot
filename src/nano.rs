@@ -1,7 +1,45 @@
-use crate::{Data, Error, verify};
+use crate::{var, verify, Data, Error};
+use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, FullEvent};
 
-pub(crate) async fn event_handler(
+pub(crate) fn nanobot(pool: sqlx::PgPool) -> Result<poise::Framework<Data, Error>, Error> {
+    // Build Bot Data
+    let data = Data {
+        au_ch_id: var!("AU_CHANNEL_ID", _),
+        db: pool,
+        ea_key: var!("EA_API_KEY"),
+        ea_url: var!("EA_API_URL"),
+        fresher: var!("FRESHER_ID", _),
+        gaijin: var!("GAIJIN_ID", _),
+        gn_ch_id: var!("GN_CHANNEL_ID", _),
+        member: var!("MEMBER_ID", _),
+        non_member: var!("NON_MEMBER_ID", _),
+        old_member: var!("OLD_MEMBER_ID", _),
+        server: var!("SERVER_ID", _),
+    };
+
+    // Build Poise Instance
+    let framework = poise::Framework::builder()
+        .options(poise::FrameworkOptions {
+            commands: crate::cmds::all_commands(),
+            event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
+            ..Default::default()
+        })
+        .setup(move |ctx, _, _| {
+            Box::pin(async move {
+                ctx.set_activity(Some(serenity::ActivityData::custom(
+                    "Verifying members since 2023",
+                )));
+                Ok(data)
+            })
+        })
+        .build();
+
+    // Return NanoBot
+    Ok(framework)
+}
+
+async fn event_handler(
     ctx: &serenity::Context,
     event: &FullEvent,
     _framework: poise::FrameworkContext<'_, Data, Error>,

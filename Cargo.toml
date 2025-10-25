@@ -18,14 +18,12 @@ indoc = "2.0.7"
 poise = "0.6.1"
 reqwest = { version = "0.12.24", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
-shuttle-runtime = { version = "0.57.0", default-features = false }
-shuttle-shared-db = { version = "0.57.0", features = ["postgres", "sqlx"] }
 sqlx = { version = "0.8.6", features = [
 	"macros",
 	"postgres",
 	"runtime-tokio-native-tls",
 ] }
-tokio = "1.48.0"
+tokio = { version = "1.48.0", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "time"] }
 url = "2.5.7"
