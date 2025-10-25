@@ -89,6 +89,7 @@ async fn main() -> Result<(), Error> {
 
     // Bind to all interfaces on port from environment (default to OS selected)
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], var!("PORT", _, 0)));
+    tracing::info!("Listening on http://{addr}");
 
     // Build Axum Router
     let router = routes::router(pool.clone())?;
