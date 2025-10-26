@@ -145,7 +145,9 @@ pub(crate) async fn shutdown_handler(token: CancellationToken) {
     let sig_int = ctrl_c();
 
     #[cfg(unix)]
-    let sig_term = signal(SignalKind::terminate()).expect("SIGTERM").recv();
+    let mut signal = signal(SignalKind::terminate()).expect("SIGTERM");
+    #[cfg(unix)]
+    let sig_term = signal.recv();
     #[cfg(not(unix))]
     let sig_term = std::future::pending::<Option<()>>();
 

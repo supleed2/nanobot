@@ -99,8 +99,8 @@ async fn main() -> Result<(), Error> {
     // Connect to SQLite DB and init
     let pool = nano::init_db(&var!("DATABASE_URL")).await?;
 
-    // Bind to all interfaces on port from environment (default to OS selected)
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], var!("PORT", _, 0)));
+    // Bind to all interfaces on port from environment (default to T9 "nano")
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], var!("PORT", _, 6266)));
     tracing::info!("Listening on http://{addr}");
 
     // Build Axum Router
