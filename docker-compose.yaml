@@ -1,0 +1,13 @@
+services:
+  server:
+    # build: .
+    image: ghcr.io/supleed2/nanobot:latest
+    container_name: nanobot
+    environment:
+      - "PORT=6266"
+    ports:
+      - "${HOST_PORT}:6266"
+    volumes:
+      - ${DATA}:/app/data:rw
+      - ${DOTENV}:/app/.env:ro
+    restart: unless-stopped
