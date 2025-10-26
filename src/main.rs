@@ -3,6 +3,8 @@
 use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, ClientBuilder, GatewayIntents};
 use std::future::IntoFuture as _;
+use tokio::net::TcpListener;
+use tokio_util::sync::CancellationToken;
 
 mod cmds;
 mod db;
@@ -84,6 +86,16 @@ async fn main() -> Result<(), Error> {
     // Set Up Tracing Subscriber
     nano::init_tracing_subscriber();
 
+    // Create cancellation tokens
+    let token = CancellationToken::new();
+    let axum_token = token.clone();
+
+    // Create signal handler
+    tokio::spawn(nano::shutdown_handler(token.clone()));
+
+    // Create Axum cancellation signal
+    let signal = async move { axum_token.cancelled().await };
+
     // Connect to SQLite DB and init
     let pool = nano::init_db(&var!("DATABASE_URL")).await?;
 
@@ -94,8 +106,9 @@ async fn main() -> Result<(), Error> {
     // Build Axum Router
     let router = routes::router(pool.clone())?;
 
-    // Create Axum server
-    let server = axum::serve(tokio::net::TcpListener::bind(addr).await?, router).into_future();
+    // Create Axum server with graceful shutdown
+    let listener = TcpListener::bind(addr).await?;
+    let server = axum::serve(listener, router).with_graceful_shutdown(signal);
 
     // Create Discord Bot client
     let mut client = ClientBuilder::new(var!("DISCORD_TOKEN"), GatewayIntents::non_privileged())
@@ -104,9 +117,14 @@ async fn main() -> Result<(), Error> {
 
     // Run futures
     tokio::select! {
-        _ = client.start_autosharded() => {},
-        _ = server => {},
+        err = client.start_autosharded() => tracing::warn!("Discord client quit: {err:?}"),
+        err = server.into_future() => tracing::warn!("Axum server quit: {err:?}"),
+        () = token.cancelled() => tracing::info!("Shutting down gracefully..."),
     };
+
+    // Delay for cleanup
+    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    tracing::info!("Shutdown complete");
 
     Ok(())
 }

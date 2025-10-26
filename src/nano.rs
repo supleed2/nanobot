@@ -1,6 +1,10 @@
 use crate::{var, verify, Data, Error};
 use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, FullEvent};
+use tokio::signal::ctrl_c;
+#[cfg(unix)]
+use tokio::signal::unix::{signal, SignalKind};
+use tokio_util::sync::CancellationToken;
 
 pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, Error>, Error> {
     // Build Bot Data
@@ -135,4 +139,20 @@ pub(crate) fn init_tracing_subscriber() {
                 .with_filter(ts::EnvFilter::new("off,serenity=info")),
         )
         .init();
+}
+
+pub(crate) async fn shutdown_handler(token: CancellationToken) {
+    let sig_int = ctrl_c();
+
+    #[cfg(unix)]
+    let sig_term = signal(SignalKind::terminate()).expect("SIGTERM").recv();
+    #[cfg(not(unix))]
+    let sig_term = std::future::pending::<Option<()>>();
+
+    tokio::select! {
+        _ = sig_int => tracing::info!("Received SIGINT, initiating graceful shutdown"),
+        _ = sig_term => tracing::info!("Received SIGTERM, initiating graceful shutdown"),
+    }
+
+    token.cancel();
 }
