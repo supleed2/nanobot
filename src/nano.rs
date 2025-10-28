@@ -102,6 +102,7 @@ async fn event_handler(
                 "manual_3n" => verify::manual_3(ctx, m, data, Fresher::No).await?,
                 "manual_3p" => verify::manual_3(ctx, m, data, Fresher::YesPg).await?,
                 "manual_3u" => verify::manual_3(ctx, m, data, Fresher::YesUg).await?,
+                id if id.starts_with("manual_5-") => verify::manual_5(ctx, m, data, id).await?,
                 _ => {}
             }
         }

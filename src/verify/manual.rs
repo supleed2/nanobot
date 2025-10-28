@@ -1,4 +1,4 @@
-use crate::{db, verify, Data, Error, Fresher, ManualMember};
+use crate::{db, verify, Data, Error, Fresher, Gaijin, ManualMember};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -95,6 +95,7 @@ pub(crate) async fn manual_2(
     Ok(())
 }
 
+#[allow(clippy::too_many_lines, reason = "Lots of logic")]
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_3(
     ctx: &serenity::Context,
@@ -152,6 +153,10 @@ pub(crate) async fn manual_3(
                                 .style(serenity::ButtonStyle::Danger)
                                 .emoji('❎')
                                 .label("Deny"),
+                            CreateButton::new(format!("verify-g-{}", m.user.id))
+                                .style(serenity::ButtonStyle::Primary)
+                                .emoji('❗')
+                                .label("Gaijin"),
                         ])]),
                 )
                 .await
@@ -191,20 +196,35 @@ pub(crate) async fn manual_3(
             .await?;
             return Ok(());
         }
-        Err(e) => tracing::error!("{e}"),
+        Err(e) => {
+            tracing::error!("{e}");
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Sorry, something went wrong. Please try again, or contact an Admin if it happens again.")
+                        .ephemeral(true),
+                ),
+            )
+            .await?;
+        }
     }
-    m.create_response(
-        &ctx.http,
-        CreateInteractionResponse::Message(
-            CreateInteractionResponseMessage::new()
-                .content("Sorry, something went wrong. Please try again, or contact an Admin if it happens again.")
-                .ephemeral(true),
-        ),
-    )
-    .await?;
+
     Ok(())
 }
 
+#[derive(Modal)]
+#[name = "Add Gaijin"]
+struct ManualGaijin {
+    #[name = "Name as on Student ID"]
+    #[placeholder = "Firstname Lastname"]
+    name: String,
+    #[name = "University"]
+    #[placeholder = "Kings, LSE, UCL, etc."]
+    university: String,
+}
+
+#[allow(clippy::too_many_lines, reason = "Lots of logic")]
 #[tracing::instrument(skip_all)]
 pub(crate) async fn manual_4(
     ctx: &serenity::Context,
@@ -212,22 +232,12 @@ pub(crate) async fn manual_4(
     data: &Data,
     id: &str,
 ) -> Result<(), Error> {
-    let verify = matches!(id.chars().nth(7), Some('y'));
-    let user = id
-        .chars()
-        .skip(9)
-        .collect::<String>()
-        .parse::<u64>()
-        .map(serenity::UserId::new)
-        .unwrap_or_default()
-        .to_user(ctx)
-        .await
-        .unwrap_or_default();
+    let user = id_to_user(ctx, id).await;
 
     let mut member = data.server.member(&ctx.http, &user).await?;
 
-    if verify {
-        match db::insert_member_from_manual(&data.db, user.id.into()).await {
+    match id.chars().nth(7) {
+        Some('y') => match db::insert_member_from_manual(&data.db, user.id.into()).await {
             Ok(mm) => {
                 tracing::info!(
                     "{} ({}) added via manual ({})",
@@ -277,26 +287,134 @@ pub(crate) async fn manual_4(
                 )
                 .await?;
             }
+        },
+        Some('n') => {
+            db::delete_manual_by_id(&data.db, user.id.into()).await?;
+            tracing::info!("{} ({}) denied via manual", user.name, user.id);
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::UpdateMessage(
+                    CreateInteractionResponseMessage::new()
+                        .components(vec![])
+                        .embed(
+                            CreateEmbed::new()
+                                .title("Member denied via manual")
+                                .description(user.to_string())
+                                .thumbnail(user.face())
+                                .timestamp(serenity::Timestamp::now()),
+                        ),
+                ),
+            )
+            .await?;
         }
-    } else {
-        db::delete_manual_by_id(&data.db, user.id.into()).await?;
-        tracing::info!("{} ({}) denied via manual", user.name, user.id);
-        m.create_response(
-            &ctx.http,
-            CreateInteractionResponse::UpdateMessage(
-                CreateInteractionResponseMessage::new()
-                    .components(vec![])
-                    .embed(
-                        CreateEmbed::new()
-                            .title("Member denied via manual")
-                            .description(user.to_string())
-                            .thumbnail(user.face())
-                            .timestamp(serenity::Timestamp::now()),
+        Some('g') => match db::get_manual_by_id(&data.db, user.id.into()).await? {
+            Some(manual) => {
+                m.create_response(
+                    &ctx.http,
+                    ManualGaijin::create(
+                        Some(ManualGaijin {
+                            name: manual.realname,
+                            university: String::new(),
+                        }),
+                        format!("manual_5-{}", manual.discord_id),
                     ),
-            ),
-        )
-        .await?;
+                )
+                .await?;
+            }
+            None => {
+                m.create_response(
+                    &ctx.http,
+                    CreateInteractionResponse::Message(
+                        CreateInteractionResponseMessage::new()
+                            .content(format!("Failed to get user {user} from manual database")),
+                    ),
+                )
+                .await?;
+            }
+        },
+        _ => {
+            tracing::error!("{} invalid manual_4 call {}", m.user.id, id);
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("An unknown button-press was received, please try again")
+                        .ephemeral(true),
+                ),
+            )
+            .await?;
+        }
     }
 
     Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub(crate) async fn manual_5(
+    ctx: &serenity::Context,
+    m: &serenity::ModalInteraction,
+    data: &Data,
+    id: &str,
+) -> Result<(), Error> {
+    match ManualGaijin::parse(m.data.clone()) {
+        Ok(ManualGaijin { name, university }) => {
+            let user = id_to_user(ctx, id).await;
+            let _ = db::delete_manual_by_id(&data.db, user.id.into()).await?;
+            let gaijin = Gaijin {
+                discord_id: user.id.into(),
+                name: name.clone(),
+                university: university.clone(),
+            };
+            let _ = db::insert_gaijin(&data.db, gaijin).await;
+
+            let member = data.server.member(&ctx.http, &user).await?;
+            let _ = member.remove_role(&ctx.http, data.non_member).await;
+            let _ = member.add_role(&ctx.http, data.gaijin).await;
+
+            tracing::info!("{} ({}) added as gaijin via manual", user.name, user.id);
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::UpdateMessage(
+                    CreateInteractionResponseMessage::new()
+                        .components(vec![])
+                        .embed(
+                            CreateEmbed::new()
+                                .thumbnail(user.face())
+                                .title("Gaijin verified via manual")
+                                .description(user.to_string())
+                                .field("Name", name, true)
+                                .field("University", university, true)
+                                .timestamp(serenity::Timestamp::now()),
+                        ),
+                ),
+            )
+            .await?;
+        }
+        Err(e) => {
+            tracing::error!("{e}");
+            m.create_response(
+                &ctx.http,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new()
+                        .content("Sorry, something went wrong. Please try again")
+                        .ephemeral(true),
+                ),
+            )
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn id_to_user(ctx: &serenity::Context, id: &str) -> serenity::User {
+    id.chars()
+        .skip(9)
+        .collect::<String>()
+        .parse::<u64>()
+        .map(serenity::UserId::new)
+        .unwrap_or_default()
+        .to_user(ctx)
+        .await
+        .unwrap_or_default()
 }
