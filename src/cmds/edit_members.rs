@@ -1,4 +1,4 @@
-use crate::{db, verify, ACtx, Error};
+use crate::{db, verify, ACtx, Error, Fresher};
 use poise::{
     serenity_prelude::{self as serenity, CreateEmbed, CreateMessage},
     CreateReply,
@@ -120,14 +120,18 @@ pub(crate) async fn edit_member_realname(
 pub(crate) async fn edit_member_fresher(
     ctx: ACtx<'_>,
     mut id: serenity::Member,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     tracing::info!("{} {} {fresher}", ctx.author().name, id.user.name);
     if db::edit_member_fresher(&ctx.data().db, id.user.id.into(), fresher).await? {
-        if fresher {
-            verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
-        } else {
-            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+        let context = ctx.serenity_context();
+        match fresher {
+            Fresher::No => {
+                verify::remove_role(context, &mut id, ctx.data().fresher_pg).await?;
+                verify::remove_role(context, &mut id, ctx.data().fresher_ug).await?;
+            }
+            Fresher::YesPg => verify::apply_role(context, &mut id, ctx.data().fresher_pg).await?,
+            Fresher::YesUg => verify::apply_role(context, &mut id, ctx.data().fresher_ug).await?,
         }
         ctx.say(format!("{id} Fresher status updated to {fresher}"))
             .await?;
@@ -173,8 +177,11 @@ pub(crate) async fn set_members_non_fresher(ctx: ACtx<'_>) -> Result<(), Error> 
         .await?;
     let mut members = ctx.data().server.members_iter(ctx.http()).boxed();
     while let Some(Ok(m)) = members.next().await {
-        if m.roles.contains(&ctx.data().fresher) {
-            let _ = m.remove_role(ctx.http(), ctx.data().fresher).await;
+        if m.roles.contains(&ctx.data().fresher_pg) {
+            let _ = m.remove_role(ctx.http(), ctx.data().fresher_pg).await;
+        }
+        if m.roles.contains(&ctx.data().fresher_ug) {
+            let _ = m.remove_role(ctx.http(), ctx.data().fresher_ug).await;
         }
     }
     ctx.say("Roles removed").await?;

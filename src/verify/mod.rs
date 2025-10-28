@@ -1,4 +1,4 @@
-use crate::{db, Data, Error};
+use crate::{db, Data, Error, Fresher};
 use poise::serenity_prelude::{
     self as serenity, CacheHttp, CreateActionRow, CreateButton, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -75,9 +75,12 @@ pub(crate) async fn start(
     // Check if user is already verified
     if let Some(member) = db::get_member_by_id(&data.db, m.user.id.into()).await? {
         let mut mm = m.member.clone().unwrap();
+        remove_role(ctx, &mut mm, data.non_member).await?;
         apply_role(ctx, &mut mm, data.member).await?;
-        if member.fresher {
-            apply_role(ctx, &mut mm, data.fresher).await?;
+        match member.fresher {
+            Fresher::No => {}
+            Fresher::YesPg => apply_role(ctx, &mut mm, data.fresher_pg).await?,
+            Fresher::YesUg => apply_role(ctx, &mut mm, data.fresher_ug).await?,
         }
         m.create_response(
             &ctx.http,
@@ -142,7 +145,7 @@ pub(crate) async fn welcome_user(
     http: impl CacheHttp,
     channel: &serenity::ChannelId,
     user: &serenity::User,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     channel
         .send_message(
@@ -150,10 +153,10 @@ pub(crate) async fn welcome_user(
             CreateMessage::new().content(format!(
                 "Welcome to ICAS {user}, if you have any questions, \
                     feel free to ping a committee member{}!",
-                if fresher {
-                    ", and look out for other freshers in green"
-                } else {
-                    ""
+                match fresher {
+                    Fresher::No => "",
+                    Fresher::YesPg => ", and look out for other postgraduate freshers in green",
+                    Fresher::YesUg => ", and look out for other freshers in green",
                 }
             )),
         )

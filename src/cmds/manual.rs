@@ -1,4 +1,4 @@
-use crate::{db, ACtx, Error, ManualMember};
+use crate::{db, ACtx, Error, Fresher, ManualMember};
 use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
@@ -97,7 +97,7 @@ pub(crate) async fn add_manual(
     shortcode: String,
     nickname: String,
     realname: String,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     tracing::info!(
         "{} {}, {shortcode}, {realname}, {nickname}",

@@ -1,4 +1,4 @@
-use crate::{Error, ManualMember, Member, PendingMember};
+use crate::{Error, Fresher, ManualMember, Member, PendingMember};
 
 /// Get count of entries in members table
 pub(crate) async fn count_members(pool: &sqlx::SqlitePool) -> Result<i64, Error> {
@@ -131,7 +131,7 @@ pub(crate) async fn insert_member_from_pending(
     pool: &sqlx::SqlitePool,
     id: i64,
     nickname: &str,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<Member, Error> {
     let p = sqlx::query_as!(
         PendingMember,
@@ -235,7 +235,7 @@ pub(crate) async fn edit_member_realname(
 pub(crate) async fn edit_member_fresher(
     pool: &sqlx::SqlitePool,
     id: i64,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<bool, Error> {
     let r = sqlx::query!(
         "update members set fresher=$2 where discord_id=$1",
@@ -250,7 +250,7 @@ pub(crate) async fn edit_member_fresher(
 
 /// Set all members to non-freshers
 pub(crate) async fn set_members_non_fresher(pool: &sqlx::SqlitePool) -> Result<u64, Error> {
-    Ok(sqlx::query!("update members set fresher='f'")
+    Ok(sqlx::query!("update members set fresher='no'")
         .execute(pool)
         .await?
         .rows_affected())

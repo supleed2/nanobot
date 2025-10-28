@@ -1,7 +1,8 @@
-CREATE TABLE IF NOT EXISTS "manual" (
-	"discord_id" BIGINT NOT NULL PRIMARY KEY,
-	"shortcode" VARCHAR(16) NOT NULL,
-	"nickname" TEXT NOT NULL,
-	"realname" TEXT NOT NULL,
-	"fresher" BOOLEAN NOT NULL
+create table if not exists "manual" (
+	"discord_id" bigint not null primary key,
+	"shortcode" varchar(16) not null,
+	"nickname" text not null,
+	"realname" text not null,
+	"fresher" varchar(16) not null,
+	check ("fresher" in ('no', 'yes_pg', 'yes_ug'))
 )

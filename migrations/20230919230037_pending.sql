@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS "pending" (
-	"discord_id" BIGINT NOT NULL PRIMARY KEY,
-	"shortcode" VARCHAR(16) NOT NULL,
-	"realname" TEXT NOT NULL
+create table if not exists "pending" (
+	"discord_id" bigint not null primary key,
+	"shortcode" varchar(16) not null,
+	"realname" text not null
 )

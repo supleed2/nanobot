@@ -1,4 +1,4 @@
-use crate::{db, ea, verify, Data, Error, Member};
+use crate::{db, ea, verify, Data, Error, Fresher, Member};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -31,7 +31,7 @@ pub(crate) async fn membership_1(
                     CreateButton::new("restart")
                         .style(serenity::ButtonStyle::Danger)
                         .emoji('🔙'),
-                    CreateButton::new("membership_2f")
+                    CreateButton::new("membership_2u")
                         .style(serenity::ButtonStyle::Success)
                         .emoji('✅')
                         .label("Fresher"),
@@ -39,6 +39,10 @@ pub(crate) async fn membership_1(
                         .style(serenity::ButtonStyle::Primary)
                         .emoji('❌')
                         .label("Non-fresher"),
+                    CreateButton::new("membership_2p")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('🎓')
+                        .label("Postgraduate fresher"),
                 ])]),
         ),
     )
@@ -65,7 +69,7 @@ pub(crate) async fn membership_2(
     ctx: &serenity::Context,
     m: &serenity::ComponentInteraction,
     data: &Data,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     // Delete from pending if exists
     let _ = db::delete_pending_by_id(&data.db, m.user.id.into()).await;
@@ -77,10 +81,10 @@ pub(crate) async fn membership_2(
         &ctx.http,
         Membership::create(
             None,
-            if fresher {
-                "membership_3f".to_string()
-            } else {
-                "membership_3n".to_string()
+            match fresher {
+                Fresher::No => "membership_3n".to_string(),
+                Fresher::YesPg => "membership_3p".to_string(),
+                Fresher::YesUg => "membership_3u".to_string(),
             },
         ),
     )
@@ -94,7 +98,7 @@ pub(crate) async fn membership_3(
     ctx: &serenity::Context,
     m: &serenity::ModalInteraction,
     data: &Data,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     match Membership::parse(m.data.clone()) {
         Ok(Membership {
@@ -106,11 +110,13 @@ pub(crate) async fn membership_3(
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!("{e}");
+                    let msg = "Sorry, getting membership data failed. \
+                        Please try again or contact an Admin";
                     m.create_response(
                         &ctx.http,
                         CreateInteractionResponse::Message(
                             CreateInteractionResponseMessage::new()
-                                .content("Sorry, getting membership data failed. Please try again")
+                                .content(msg)
                                 .ephemeral(true),
                         ),
                     )
@@ -123,7 +129,7 @@ pub(crate) async fn membership_3(
                     && member.order_no.to_string() == order
             }) else {
                 let msg = "Sorry, your order was not found, please check the \
-                        order number and that it is for your current year's membership";
+                    order number and that it is for your current year's membership";
                 m.create_response(
                     &ctx.http,
                     CreateInteractionResponse::Message(
@@ -150,26 +156,28 @@ pub(crate) async fn membership_3(
             .is_ok()
             {
                 tracing::info!(
-                    "{} ({}) added via membership{}",
+                    "{} ({}) added via membership ({})",
                     m.user.name,
                     m.user.id,
-                    if fresher { " (fresher)" } else { "" }
+                    fresher
                 );
                 let mut mm = m.member.clone().unwrap();
                 verify::apply_role(ctx, &mut mm, data.member).await?;
-                if fresher {
-                    verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                match fresher {
+                    Fresher::No => {}
+                    Fresher::YesPg => verify::apply_role(ctx, &mut mm, data.fresher_pg).await?,
+                    Fresher::YesUg => verify::apply_role(ctx, &mut mm, data.fresher_ug).await?,
                 }
                 m.create_response(
                     &ctx.http,
                     CreateInteractionResponse::UpdateMessage(
                         CreateInteractionResponseMessage::new()
-                            .content(if fresher {
-                                "Congratulations, you have completed verification and now \
-                                have access to the ICAS Discord and freshers thread"
-                            } else {
+                            .content(if matches!(fresher, Fresher::No) {
                                 "Congratulations, you have completed verification and now \
                                 have access to the ICAS Discord"
+                            } else {
+                                "Congratulations, you have completed verification and now \
+                                have access to the ICAS Discord and freshers thread"
                             })
                             .components(vec![]),
                     ),
@@ -205,7 +213,7 @@ pub(crate) async fn membership_3(
         &ctx.http,
         CreateInteractionResponse::Message(
             CreateInteractionResponseMessage::new()
-                .content("Sorry, something went wrong. Please try again")
+                .content("Sorry, something went wrong. Please try again or contact an Admin")
                 .ephemeral(true),
         ),
     )

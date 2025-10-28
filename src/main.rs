@@ -1,7 +1,10 @@
 #![warn(clippy::pedantic)]
 
 use anyhow::Context as _;
-use poise::serenity_prelude::{self as serenity, ClientBuilder, GatewayIntents};
+use poise::{
+    serenity_prelude::{self as serenity, ClientBuilder, GatewayIntents},
+    ChoiceParameter,
+};
 use std::future::IntoFuture as _;
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
@@ -19,7 +22,8 @@ struct Data {
     db: sqlx::SqlitePool,
     ea_key: String,
     ea_url: String,
-    fresher: serenity::RoleId,
+    fresher_pg: serenity::RoleId,
+    fresher_ug: serenity::RoleId,
     gaijin: serenity::RoleId,
     gn_ch_id: serenity::ChannelId,
     member: serenity::RoleId,
@@ -31,13 +35,44 @@ struct Data {
 type ACtx<'a> = poise::ApplicationContext<'a, Data, Error>;
 type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
+#[derive(Copy, Clone, Debug, ChoiceParameter, serde::Deserialize, serde::Serialize, sqlx::Type)]
+#[sqlx(type_name = "text", rename_all = "snake_case")]
+enum Fresher {
+    #[name = "Not Fresher"]
+    No,
+    #[name = "Postgraduate Fresher"]
+    YesPg,
+    #[name = "Undergraduate Fresher"]
+    YesUg,
+}
+
+impl std::fmt::Display for Fresher {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Fresher::No => write!(f, "No"),
+            Fresher::YesPg => write!(f, "Yes, Postgraduate"),
+            Fresher::YesUg => write!(f, "Yes, Undergraduate"),
+        }
+    }
+}
+
+impl From<String> for Fresher {
+    fn from(value: String) -> Self {
+        match value.to_lowercase().as_str() {
+            "yes_pg" => Self::YesPg,
+            "yes_ug" => Self::YesUg,
+            _ => Self::No,
+        }
+    }
+}
+
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 struct Member {
     discord_id: i64,
     shortcode: String,
     nickname: String,
     realname: String,
-    fresher: bool,
+    fresher: Fresher,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -53,7 +88,7 @@ struct ManualMember {
     shortcode: String,
     nickname: String,
     realname: String,
-    fresher: bool,
+    fresher: Fresher,
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

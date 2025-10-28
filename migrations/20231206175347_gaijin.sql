@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS "gaijin" (
-	"discord_id" BIGINT NOT NULL PRIMARY KEY,
-	"name" TEXT NOT NULL,
-	"university" TEXT NOT NULL
+create table if not exists "gaijin" (
+	"discord_id" bigint not null primary key,
+	"name" text not null,
+	"university" text not null
 )

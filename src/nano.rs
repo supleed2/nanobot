@@ -1,4 +1,4 @@
-use crate::{var, verify, Data, Error};
+use crate::{var, verify, Data, Error, Fresher};
 use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, FullEvent};
 use tokio::signal::ctrl_c;
@@ -13,7 +13,8 @@ pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, E
         db: pool,
         ea_key: var!("EA_API_KEY"),
         ea_url: var!("EA_API_URL"),
-        fresher: var!("FRESHER_ID", _),
+        fresher_pg: var!("FRESHER_PG_ID", _),
+        fresher_ug: var!("FRESHER_UG_ID", _),
         gaijin: var!("GAIJIN_ID", _),
         gn_ch_id: var!("GN_CHANNEL_ID", _),
         member: var!("MEMBER_ID", _),
@@ -66,16 +67,20 @@ async fn event_handler(
                 "login_1" => verify::login_1(ctx, m).await?,
                 "login_2" => verify::login_2(ctx, m, data).await?,
                 "login_3" => verify::login_3(ctx, m).await?,
-                "login_4f" => verify::login_4(ctx, m, true).await?,
-                "login_4n" => verify::login_4(ctx, m, false).await?,
-                "login_5f" => verify::login_5(ctx, m, true).await?,
-                "login_5n" => verify::login_5(ctx, m, false).await?,
+                "login_4n" => verify::login_4(ctx, m, Fresher::No).await?,
+                "login_4p" => verify::login_4(ctx, m, Fresher::YesPg).await?,
+                "login_4u" => verify::login_4(ctx, m, Fresher::YesUg).await?,
+                "login_5n" => verify::login_5(ctx, m, Fresher::No).await?,
+                "login_5p" => verify::login_5(ctx, m, Fresher::YesPg).await?,
+                "login_5u" => verify::login_5(ctx, m, Fresher::YesUg).await?,
                 "membership_1" => verify::membership_1(ctx, m).await?,
-                "membership_2f" => verify::membership_2(ctx, m, data, true).await?,
-                "membership_2n" => verify::membership_2(ctx, m, data, false).await?,
+                "membership_2n" => verify::membership_2(ctx, m, data, Fresher::No).await?,
+                "membership_2p" => verify::membership_2(ctx, m, data, Fresher::YesPg).await?,
+                "membership_2u" => verify::membership_2(ctx, m, data, Fresher::YesUg).await?,
                 "manual_1" => verify::manual_1(ctx, m).await?,
-                "manual_2f" => verify::manual_2(ctx, m, data, true).await?,
-                "manual_2n" => verify::manual_2(ctx, m, data, false).await?,
+                "manual_2n" => verify::manual_2(ctx, m, data, Fresher::No).await?,
+                "manual_2p" => verify::manual_2(ctx, m, data, Fresher::YesPg).await?,
+                "manual_2u" => verify::manual_2(ctx, m, data, Fresher::YesUg).await?,
                 id if id.starts_with("verify-") => verify::manual_4(ctx, m, data, id).await?,
                 _ => {
                     tracing::info!("Unknown interaction, printing:\n{m:#?}");
@@ -88,12 +93,15 @@ async fn event_handler(
         } => {
             tracing::info!("Modal submit: {} by {}", m.data.custom_id, m.user.name);
             match m.data.custom_id.as_str() {
-                "login_6f" => verify::login_6(ctx, m, data, true).await?,
-                "login_6n" => verify::login_6(ctx, m, data, false).await?,
-                "membership_3f" => verify::membership_3(ctx, m, data, true).await?,
-                "membership_3n" => verify::membership_3(ctx, m, data, false).await?,
-                "manual_3f" => verify::manual_3(ctx, m, data, true).await?,
-                "manual_3n" => verify::manual_3(ctx, m, data, false).await?,
+                "login_6n" => verify::login_6(ctx, m, data, Fresher::No).await?,
+                "login_6p" => verify::login_6(ctx, m, data, Fresher::YesPg).await?,
+                "login_6u" => verify::login_6(ctx, m, data, Fresher::YesUg).await?,
+                "membership_3n" => verify::membership_3(ctx, m, data, Fresher::No).await?,
+                "membership_3p" => verify::membership_3(ctx, m, data, Fresher::YesPg).await?,
+                "membership_3u" => verify::membership_3(ctx, m, data, Fresher::YesUg).await?,
+                "manual_3n" => verify::manual_3(ctx, m, data, Fresher::No).await?,
+                "manual_3p" => verify::manual_3(ctx, m, data, Fresher::YesPg).await?,
+                "manual_3u" => verify::manual_3(ctx, m, data, Fresher::YesUg).await?,
                 _ => {}
             }
         }

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "update members set fresher='f'",
+  "query": "update members set fresher='no'",
   "describe": {
     "columns": [],
     "parameters": {
@@ -8,5 +8,5 @@
     },
     "nullable": []
   },
-  "hash": "cec6db96b0061381aa39fc43ab63548b5298f7bf8cb67ed0c11d809dbb5a5fe3"
+  "hash": "28fe06c30507a267b49aebbfe22a696d25110d813de6f3a3a73c359ee1da013c"
 }

@@ -1,4 +1,4 @@
-use crate::{db, verify, Data, Error};
+use crate::{db, verify, Data, Error, Fresher};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -116,7 +116,7 @@ pub(crate) async fn login_3(
                     CreateButton::new("login_2")
                         .style(serenity::ButtonStyle::Danger)
                         .emoji('🔙'),
-                    CreateButton::new("login_4f")
+                    CreateButton::new("login_4u")
                         .style(serenity::ButtonStyle::Success)
                         .emoji('✅')
                         .label("Fresher"),
@@ -124,6 +124,10 @@ pub(crate) async fn login_3(
                         .style(serenity::ButtonStyle::Primary)
                         .emoji('❌')
                         .label("Non-fresher"),
+                    CreateButton::new("login_4p")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('🎓')
+                        .label("Postgraduate fresher"),
                 ])]),
         ),
     )
@@ -135,8 +139,14 @@ pub(crate) async fn login_3(
 pub(crate) async fn login_4(
     ctx: &serenity::Context,
     m: &serenity::ComponentInteraction,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
+    let next = match fresher {
+        Fresher::No => "login_5n",
+        Fresher::YesPg => "login_5p",
+        Fresher::YesUg => "login_5u",
+    };
+
     m.create_response(
         &ctx.http,
         CreateInteractionResponse::UpdateMessage(
@@ -146,7 +156,7 @@ pub(crate) async fn login_4(
                     CreateButton::new("login_3")
                         .style(serenity::ButtonStyle::Danger)
                         .emoji('🔙'),
-                    CreateButton::new(if fresher { "login_5f" } else { "login_5n" })
+                    CreateButton::new(next)
                         .style(serenity::ButtonStyle::Primary)
                         .emoji('💬')
                         .label("Name"),
@@ -169,16 +179,16 @@ struct Nickname {
 pub(crate) async fn login_5(
     ctx: &serenity::Context,
     m: &serenity::ComponentInteraction,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     m.create_response(
         &ctx.http,
         Nickname::create(
             None,
-            if fresher {
-                "login_6f".to_string()
-            } else {
-                "login_6n".to_string()
+            match fresher {
+                Fresher::No => "login_6n".to_string(),
+                Fresher::YesPg => "login_6p".to_string(),
+                Fresher::YesUg => "login_6u".to_string(),
             },
         ),
     )
@@ -191,7 +201,7 @@ pub(crate) async fn login_6(
     ctx: &serenity::Context,
     m: &serenity::ModalInteraction,
     data: &Data,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     match Nickname::parse(m.data.clone()) {
         Ok(Nickname { nickname }) => {
@@ -203,22 +213,24 @@ pub(crate) async fn login_6(
             {
                 Ok(p) => {
                     tracing::info!(
-                        "{} ({}) added via login{}",
+                        "{} ({}) added via login ({})",
                         m.user.name,
                         m.user.id,
-                        if fresher { " (fresher)" } else { "" }
+                        fresher
                     );
                     let mut mm = m.member.clone().unwrap();
                     verify::apply_role(ctx, &mut mm, data.member).await?;
-                    if fresher {
-                        verify::apply_role(ctx, &mut mm, data.fresher).await?;
+                    match fresher {
+                        Fresher::No => {}
+                        Fresher::YesPg => verify::apply_role(ctx, &mut mm, data.fresher_pg).await?,
+                        Fresher::YesUg => verify::apply_role(ctx, &mut mm, data.fresher_ug).await?,
                     }
-                    let msg = if fresher {
-                        "Congratulations, you have completed verification and now \
-                        have access to the ICAS Discord and freshers thread"
-                    } else {
+                    let msg = if matches!(fresher, Fresher::No) {
                         "Congratulations, you have completed verification and now \
                         have access to the ICAS Discord"
+                    } else {
+                        "Congratulations, you have completed verification and now \
+                        have access to the ICAS Discord and freshers thread"
                     };
                     m.create_response(
                         &ctx.http,

@@ -1,4 +1,4 @@
-use crate::{db, verify, Data, Error, ManualMember};
+use crate::{db, verify, Data, Error, Fresher, ManualMember};
 use poise::serenity_prelude::{
     self as serenity, CreateActionRow, CreateButton, CreateEmbed, CreateInteractionResponse,
     CreateInteractionResponseMessage, CreateMessage,
@@ -16,7 +16,7 @@ const MANUAL_INTRO: &str = indoc::indoc! {"
 
     We try to respond quickly but this may take a day or two during busy term times :)
 
-    First, are you a fresher?
+    First, are you a fresher? (And if yes, a postgraduate fresher?)
 "};
 
 #[tracing::instrument(skip_all)]
@@ -33,7 +33,7 @@ pub(crate) async fn manual_1(
                     CreateButton::new("restart")
                         .style(serenity::ButtonStyle::Danger)
                         .emoji('🔙'),
-                    CreateButton::new("manual_2f")
+                    CreateButton::new("manual_2u")
                         .style(serenity::ButtonStyle::Success)
                         .emoji('✅')
                         .label("Fresher"),
@@ -41,6 +41,10 @@ pub(crate) async fn manual_1(
                         .style(serenity::ButtonStyle::Primary)
                         .emoji('❌')
                         .label("Non-fresher"),
+                    CreateButton::new("manual_2p")
+                        .style(serenity::ButtonStyle::Success)
+                        .emoji('🎓')
+                        .label("Postgraduate fresher"),
                 ])]),
         ),
     )
@@ -71,7 +75,7 @@ pub(crate) async fn manual_2(
     ctx: &serenity::Context,
     m: &serenity::ComponentInteraction,
     data: &Data,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     // Delete from manual if exists
     let _ = db::delete_manual_by_id(&data.db, m.user.id.into()).await;
@@ -80,10 +84,10 @@ pub(crate) async fn manual_2(
         &ctx.http,
         Manual::create(
             None,
-            if fresher {
-                "manual_3f".to_string()
-            } else {
-                "manual_3n".to_string()
+            match fresher {
+                Fresher::No => "manual_3n".to_string(),
+                Fresher::YesPg => "manual_3p".to_string(),
+                Fresher::YesUg => "manual_3u".to_string(),
             },
         ),
     )
@@ -96,7 +100,7 @@ pub(crate) async fn manual_3(
     ctx: &serenity::Context,
     m: &serenity::ModalInteraction,
     data: &Data,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     match Manual::parse(m.data.clone()) {
         Ok(Manual {
@@ -173,7 +177,7 @@ pub(crate) async fn manual_3(
                     "Thanks, your verification request has been sent, but there was an issue, please ask a Committee member to take a look!"
                 }
             } else {
-                "Sending your verification request failed, please try again."
+                "Sending your verification request failed, please try again, or contact an Admin if it happens again."
             };
 
             m.create_response(
@@ -193,7 +197,7 @@ pub(crate) async fn manual_3(
         &ctx.http,
         CreateInteractionResponse::Message(
             CreateInteractionResponseMessage::new()
-                .content("Sorry, something went wrong. Please try again")
+                .content("Sorry, something went wrong. Please try again, or contact an Admin if it happens again.")
                 .ephemeral(true),
         ),
     )
@@ -226,14 +230,16 @@ pub(crate) async fn manual_4(
         match db::insert_member_from_manual(&data.db, user.id.into()).await {
             Ok(mm) => {
                 tracing::info!(
-                    "{} ({}) added via manual{}",
+                    "{} ({}) added via manual ({})",
                     user.name,
                     user.id,
-                    if mm.fresher { " (fresher)" } else { "" }
+                    mm.fresher
                 );
                 verify::apply_role(ctx, &mut member, data.member).await?;
-                if mm.fresher {
-                    verify::apply_role(ctx, &mut member, data.fresher).await?;
+                match mm.fresher {
+                    Fresher::No => {}
+                    Fresher::YesPg => verify::apply_role(ctx, &mut member, data.fresher_pg).await?,
+                    Fresher::YesUg => verify::apply_role(ctx, &mut member, data.fresher_ug).await?,
                 }
                 m.create_response(
                     &ctx.http,

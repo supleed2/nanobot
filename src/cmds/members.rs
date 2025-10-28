@@ -1,4 +1,4 @@
-use crate::{db, verify, ACtx, Error, Member};
+use crate::{db, verify, ACtx, Error, Fresher, Member};
 use poise::serenity_prelude::{self as serenity, CreateAttachment, CreateMessage};
 use poise::Modal;
 
@@ -25,7 +25,8 @@ pub(crate) async fn delete_member(
     if db::delete_member_by_id(&ctx.data().db, id.user.id.into()).await? {
         if remove_roles.unwrap_or(true) {
             verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
-            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher_pg).await?;
+            verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().fresher_ug).await?;
         }
         ctx.say(format!("Successfully deleted member info for {id}"))
             .await?
@@ -180,7 +181,7 @@ pub(crate) async fn add_member(
     shortcode: String,
     nickname: String,
     realname: String,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     tracing::info!(
         "{} {}, {shortcode}, {realname}, {nickname}",
@@ -198,10 +199,14 @@ pub(crate) async fn add_member(
         },
     )
     .await?;
-    verify::remove_role(ctx.serenity_context(), &mut id, ctx.data().non_member).await?;
-    verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().member).await?;
-    if fresher {
-        verify::apply_role(ctx.serenity_context(), &mut id, ctx.data().fresher).await?;
+
+    let context = ctx.serenity_context();
+    verify::remove_role(context, &mut id, ctx.data().non_member).await?;
+    verify::apply_role(context, &mut id, ctx.data().member).await?;
+    match fresher {
+        Fresher::No => {}
+        Fresher::YesPg => verify::apply_role(context, &mut id, ctx.data().fresher_pg).await?,
+        Fresher::YesUg => verify::apply_role(context, &mut id, ctx.data().fresher_ug).await?,
     }
     ctx.say(format!("Member added: {id}")).await?;
     Ok(())
@@ -214,7 +219,7 @@ pub(crate) async fn insert_member_from_pending(
     ctx: ACtx<'_>,
     id: serenity::Member,
     nickname: String,
-    fresher: bool,
+    fresher: Fresher,
 ) -> Result<(), Error> {
     tracing::info!("{} {}", ctx.author().name, id.user.name);
     match db::insert_member_from_pending(&ctx.data().db, id.user.id.into(), &nickname, fresher)
