@@ -130,8 +130,14 @@ pub(crate) async fn edit_member_fresher(
                 verify::remove_role(context, &mut id, ctx.data().fresher_pg).await?;
                 verify::remove_role(context, &mut id, ctx.data().fresher_ug).await?;
             }
-            Fresher::YesPg => verify::apply_role(context, &mut id, ctx.data().fresher_pg).await?,
-            Fresher::YesUg => verify::apply_role(context, &mut id, ctx.data().fresher_ug).await?,
+            Fresher::YesPg => {
+                verify::apply_role(context, &mut id, ctx.data().fresher_pg).await?;
+                verify::remove_role(context, &mut id, ctx.data().fresher_ug).await?;
+            }
+            Fresher::YesUg => {
+                verify::remove_role(context, &mut id, ctx.data().fresher_pg).await?;
+                verify::apply_role(context, &mut id, ctx.data().fresher_ug).await?;
+            }
         }
         ctx.say(format!("{id} Fresher status updated to {fresher}"))
             .await?;
