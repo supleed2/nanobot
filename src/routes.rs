@@ -72,7 +72,7 @@ pub(crate) struct Import {
 
 #[tracing::instrument(skip_all)]
 pub(crate) async fn import(
-    _pool: sqlx::SqlitePool,
+    pool: sqlx::SqlitePool,
     import: Option<Json<Import>>,
     expected_key: String,
 ) -> impl IntoResponse {
@@ -84,12 +84,46 @@ pub(crate) async fn import(
         return StatusCode::NOT_FOUND.into_response();
     }
 
-    format!(
-        "Got {} pending, {} manual, {} members, {} extras",
+    let (pending_got, manual_got, members_got, gaijin_got) = (
         db.pending.len(),
         db.manual.len(),
         db.members.len(),
-        db.extras.len()
+        db.extras.len(),
+    );
+
+    let mut gaijin_added = 0;
+    let mut member_added = 0;
+    let mut manual_added = 0;
+    let mut pending_added = 0;
+
+    for gaijin in db.extras {
+        if db::insert_gaijin(&pool, gaijin).await.is_ok() {
+            gaijin_added += 1;
+        }
+    }
+
+    for member in db.members {
+        if db::insert_member(&pool, member).await.is_ok() {
+            member_added += 1;
+        }
+    }
+
+    for manual in db.manual {
+        if db::insert_manual(&pool, manual).await.is_ok() {
+            manual_added += 1;
+        }
+    }
+
+    for pending in db.pending {
+        if db::insert_pending(&pool, pending).await.is_ok() {
+            pending_added += 1;
+        }
+    }
+
+    format!(
+        "Got {pending_got} pending, {manual_got} manual, {members_got} members, \
+        {gaijin_got} extras, added {gaijin_added} gaijin, {member_added} members, \
+        {manual_added} manual, {pending_added} pending"
     )
     .into_response()
 }
