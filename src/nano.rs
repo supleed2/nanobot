@@ -125,29 +125,23 @@ pub(crate) async fn init_db(db_url: &str) -> Result<sqlx::SqlitePool, Error> {
 }
 
 pub(crate) fn init_tracing_subscriber() {
-    use tracing_subscriber as ts;
-    use ts::prelude::*;
-    ts::registry()
-        .with(
-            ts::fmt::layer()
-                .without_time()
-                .with_filter(ts::EnvFilter::new(
-                    "info,nano=info,shuttle=info,serenity=off",
-                )),
-        )
-        .with(
-            ts::fmt::layer()
-                .without_time()
-                .fmt_fields(ts::fmt::format::debug_fn(|w, f, v| {
-                    if f.name() == "message" {
-                        write!(w, "{v:?}")
-                    } else {
-                        write!(w, "")
-                    }
-                }))
-                .with_filter(ts::EnvFilter::new("off,serenity=info")),
-        )
-        .init();
+    use tracing_subscriber::{fmt, prelude::*, registry, EnvFilter};
+
+    let msg = fmt::format::debug_fn(|w, f, v| {
+        if f.name() == "message" {
+            write!(w, "{v:?}")
+        } else {
+            write!(w, "")
+        }
+    });
+
+    let others =
+        fmt::layer().with_filter(EnvFilter::new("info,nano=info,shuttle=info,serenity=off"));
+    let serenity = fmt::layer()
+        .fmt_fields(msg)
+        .with_filter(EnvFilter::new("off,serenity=info"));
+
+    registry().with(others).with(serenity).init();
 }
 
 pub(crate) async fn shutdown_handler(token: CancellationToken) {
