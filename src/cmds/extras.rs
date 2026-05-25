@@ -54,24 +54,13 @@ pub(crate) async fn get_all_gaijin(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(Confirm { confirm }) = Confirm::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let gaijin = db::get_all_gaijin(&ctx.data().db).await?;
-            match tokio::fs::write("gaijin.rs", format!("{gaijin:#?}")).await {
-                Ok(()) => {
-                    ctx.say("Sending gaijin db data in followup message")
-                        .await?;
-                    ctx.channel_id()
-                        .send_files(
-                            &ctx.http(),
-                            vec![CreateAttachment::path("gaijin.rs").await?],
-                            CreateMessage::new().content("File: gaijin db"),
-                        )
-                        .await?;
-                }
-                Err(e) => {
-                    tracing::error!("{e}");
-                    ctx.say("Failed to create gaijin db file").await?;
-                }
-            }
-            let _ = tokio::fs::remove_file("gaijin.rs").await;
+            ctx.say("Sending gaijin db data in followup message")
+                .await?;
+            let file = CreateAttachment::bytes(format!("{gaijin:#?}").into_bytes(), "gaijin.rs");
+            let msg = CreateMessage::new().content("File: gaijin db");
+            ctx.channel_id()
+                .send_files(&ctx.http(), vec![file], msg)
+                .await?;
             Ok(())
         } else {
             ctx.say("Skipping gaijin db output").await?;

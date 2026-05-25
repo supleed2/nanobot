@@ -44,24 +44,13 @@ pub(crate) async fn get_all_manual(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(ConfirmManual { confirm }) = ConfirmManual::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let manual = db::get_all_manual(&ctx.data().db).await?;
-            match tokio::fs::write("manual.rs", format!("{manual:#?}")).await {
-                Ok(()) => {
-                    ctx.say("Sending manual db data in followup message")
-                        .await?;
-                    ctx.channel_id()
-                        .send_files(
-                            &ctx.http(),
-                            vec![CreateAttachment::path("manual.rs").await?],
-                            CreateMessage::new().content("File: manual db"),
-                        )
-                        .await?;
-                }
-                Err(e) => {
-                    tracing::error!("{e}");
-                    ctx.say("Failed to create manual db file").await?;
-                }
-            }
-            let _ = tokio::fs::remove_file("manual.rs").await;
+            ctx.say("Sending manual db data in followup message")
+                .await?;
+            let file = CreateAttachment::bytes(format!("{manual:#?}").into_bytes(), "manual.rs");
+            let msg = CreateMessage::new().content("File: manual db");
+            ctx.channel_id()
+                .send_files(&ctx.http(), vec![file], msg)
+                .await?;
             Ok(())
         } else {
             ctx.say("Skipping manual db output").await?;

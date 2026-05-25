@@ -44,24 +44,13 @@ pub(crate) async fn get_all_pending(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(ConfirmPending { confirm }) = ConfirmPending::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let pending = db::get_all_pending(&ctx.data().db).await?;
-            match tokio::fs::write("pending.rs", format!("{pending:#?}")).await {
-                Ok(()) => {
-                    ctx.say("Sending pending db data in followup message")
-                        .await?;
-                    ctx.channel_id()
-                        .send_files(
-                            &ctx.http(),
-                            vec![CreateAttachment::path("pending.rs").await?],
-                            CreateMessage::new().content("File: pending db"),
-                        )
-                        .await?;
-                }
-                Err(e) => {
-                    tracing::error!("{e}");
-                    ctx.say("Failed to create pending db file").await?;
-                }
-            }
-            let _ = tokio::fs::remove_file("pending.rs").await;
+            ctx.say("Sending pending db data in followup message")
+                .await?;
+            let file = CreateAttachment::bytes(format!("{pending:#?}").into_bytes(), "pending.rs");
+            let msg = CreateMessage::new().content("File: pending db");
+            ctx.channel_id()
+                .send_files(&ctx.http(), vec![file], msg)
+                .await?;
             Ok(())
         } else {
             ctx.say("Skipping pending db output").await?;

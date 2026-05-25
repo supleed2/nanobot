@@ -53,24 +53,13 @@ pub(crate) async fn get_all_members(ctx: ACtx<'_>) -> Result<(), Error> {
     if let Some(Confirm { confirm }) = Confirm::execute(ctx).await? {
         if confirm.to_lowercase().contains("yes") {
             let members = db::get_all_members(&ctx.data().db).await?;
-            match tokio::fs::write("members.rs", format!("{members:#?}")).await {
-                Ok(()) => {
-                    ctx.say("Sending members db data in followup message")
-                        .await?;
-                    ctx.channel_id()
-                        .send_files(
-                            &ctx.http(),
-                            vec![CreateAttachment::path("members.rs").await?],
-                            CreateMessage::new().content("File: members db"),
-                        )
-                        .await?;
-                }
-                Err(e) => {
-                    tracing::error!("{e}");
-                    ctx.say("Failed to create members db file").await?;
-                }
-            }
-            let _ = tokio::fs::remove_file("members.rs").await;
+            ctx.say("Sending members db data in followup message")
+                .await?;
+            let file = CreateAttachment::bytes(format!("{members:#?}").into_bytes(), "members.rs");
+            let msg = CreateMessage::new().content("File: members db");
+            ctx.channel_id()
+                .send_files(&ctx.http(), vec![file], msg)
+                .await?;
             Ok(())
         } else {
             ctx.say("Skipping members db output").await?;
