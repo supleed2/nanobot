@@ -11,20 +11,21 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.100"
-axum = "0.8.6"
+anyhow = "1.0.102"
+axum = "0.8.9"
 dotenvy = "0.15.7"
 indoc = "2.0.7"
-poise = "0.6.1"
-reqwest = { version = "0.12.24", features = ["json"] }
+poise = "0.6.2"
+reqwest = { version = "0.13.3", features = ["json"] }
+rootcause = "0.12.1"
 serde = { version = "1.0.228", features = ["derive"] }
-sqlx = { version = "0.8.6", features = [
-	"macros",
+sqlx = { version = "0.9.0", features = [
+	"runtime-tokio",
 	"sqlite",
-	"runtime-tokio-native-tls",
+	"sqlx-toml",
 ] }
-tokio = { version = "1.48.0", features = ["full"] }
-tokio-util = "0.7.16"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.20", features = ["env-filter", "time"] }
-url = "2.5.7"
+tokio = { version = "1.52.3", features = ["full"] }
+tokio-util = "0.7.18"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "time"] }
+url = "2.5.8"
