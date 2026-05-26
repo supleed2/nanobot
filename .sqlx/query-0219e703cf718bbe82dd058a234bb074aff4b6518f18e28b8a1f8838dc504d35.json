@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "delete from pending where discord_id=$1 returning *",
+  "query": "select * from gaijin where fuzzy_jarowin(lower(fuzzy_translit(name)), lower(fuzzy_translit($1))) > $2 order by fuzzy_jarowin(lower(fuzzy_translit(name)), lower(fuzzy_translit($1))) desc limit $3",
   "describe": {
     "columns": [
       {
@@ -9,36 +9,36 @@
         "type_info": "Integer",
         "origin": {
           "Table": {
-            "table": "pending",
+            "table": "gaijin",
             "name": "discord_id"
           }
         }
       },
       {
-        "name": "shortcode",
+        "name": "name",
         "ordinal": 1,
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "pending",
-            "name": "shortcode"
+            "table": "gaijin",
+            "name": "name"
           }
         }
       },
       {
-        "name": "realname",
+        "name": "university",
         "ordinal": 2,
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "pending",
-            "name": "realname"
+            "table": "gaijin",
+            "name": "university"
           }
         }
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 3
     },
     "nullable": [
       false,
@@ -46,5 +46,5 @@
       false
     ]
   },
-  "hash": "7265c99235c9deff752d1a21aa38f8b33148b3e252924370a66e799b2aa4b23b"
+  "hash": "0219e703cf718bbe82dd058a234bb074aff4b6518f18e28b8a1f8838dc504d35"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "select * from members where lower(realname)=lower($1)",
+  "query": "select * from members where fuzzy_jarowin(lower(fuzzy_translit(realname)), lower(fuzzy_translit($1))) > $2 order by fuzzy_jarowin(lower(fuzzy_translit(realname)), lower(fuzzy_translit($1))) desc limit $3",
   "describe": {
     "columns": [
       {
@@ -60,7 +60,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 3
     },
     "nullable": [
       false,
@@ -70,5 +70,5 @@
       false
     ]
   },
-  "hash": "de27ac619959b8f39424b8c4c46044377c40bc92785dddf927dba6d26bea522b"
+  "hash": "c288822bba7295e48b60f6f5041d9610f91157a9147b1f585468f34e4aec3235"
 }

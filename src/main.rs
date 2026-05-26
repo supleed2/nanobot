@@ -16,6 +16,8 @@ mod nano;
 mod routes;
 mod verify;
 
+const FUZZY_THRESHOLD: f32 = 0.5;
+
 /// Program data, which is stored and accessible in all command invocations
 struct Data {
     au_ch_id: serenity::ChannelId,

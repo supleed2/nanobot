@@ -14,6 +14,7 @@ RUN cargo build --release
 
 FROM debian:trixie-slim AS app
 WORKDIR /app
+COPY fuzzy_linux_*.so ./
 COPY --from=builder /app/target/release/nano ./
 RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1000 appgroup && useradd -g appgroup -s /sbin/nologin -u 1000 appuser

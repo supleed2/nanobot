@@ -1,4 +1,4 @@
-use crate::{Error, Gaijin};
+use crate::{Error, Gaijin, FUZZY_THRESHOLD};
 
 /// Get count of entries in gaijin table
 pub(crate) async fn count_gaijin(pool: &sqlx::SqlitePool) -> Result<i64, Error> {
@@ -50,21 +50,25 @@ pub(crate) async fn get_gaijin_by_name(
     .await?)
 }
 
-// /// Get gaijin entry by Name (Fuzzy) TODO: add to whois
-// pub(crate) async fn get_gaijin_by_name_fuzzy(
-//     pool: &sqlx::SqlitePool,
-//     name: &str,
-//     limit: i64,
-// ) -> Result<Vec<Gaijin>, Error> {
-//     Ok(sqlx::query_as!(
-//         Gaijin,
-//         "select * from gaijin where similarity(name,$1) > 0.3 order by similarity(name,$1) desc limit $2",
-//         name,
-//         limit
-//     )
-//     .fetch_all(pool)
-//     .await?)
-// }
+/// Get gaijin entry by Name (Fuzzy)
+pub(crate) async fn get_gaijin_by_name_fuzzy(
+    pool: &sqlx::SqlitePool,
+    name: &str,
+    limit: i64,
+) -> Result<Vec<Gaijin>, Error> {
+    Ok(sqlx::query_as!(
+        Gaijin,
+        "select * from gaijin \
+            where fuzzy_jarowin(lower(fuzzy_translit(name)), lower(fuzzy_translit($1))) > $2 \
+            order by fuzzy_jarowin(lower(fuzzy_translit(name)), lower(fuzzy_translit($1))) desc \
+            limit $3",
+        name,
+        FUZZY_THRESHOLD,
+        limit
+    )
+    .fetch_all(pool)
+    .await?)
+}
 
 /// Add entry to gaijin table
 pub(crate) async fn insert_gaijin(pool: &sqlx::SqlitePool, g: Gaijin) -> Result<(), Error> {

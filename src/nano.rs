@@ -112,13 +112,18 @@ async fn event_handler(
 }
 
 pub(crate) async fn init_db(db_url: &str) -> Result<sqlx::SqlitePool, Error> {
-    use sqlx::migrate::MigrateDatabase;
+    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+    const FUZZY: &str = "fuzzy_linux_arm64";
+    #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+    const FUZZY: &str = "fuzzy_linux_amd64";
+    #[cfg(all(target_arch = "x86_64", target_os = "windows"))]
+    const FUZZY: &str = "fuzzy_windows_amd64";
 
-    if !sqlx::Sqlite::database_exists(db_url).await? {
-        sqlx::Sqlite::create_database(db_url).await?;
-    }
-
-    let pool = sqlx::SqlitePool::connect(db_url).await?;
+    let options = db_url
+        .parse::<sqlx::sqlite::SqliteConnectOptions>()?
+        .create_if_missing(true);
+    let options = unsafe { options.extension_with_entrypoint(FUZZY, "sqlite3_fuzzy_init") };
+    let pool = sqlx::SqlitePool::connect_with(options).await?;
     sqlx::migrate!().run(&pool).await?;
 
     Ok(pool)

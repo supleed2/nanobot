@@ -6,27 +6,57 @@
       {
         "name": "discord_id",
         "ordinal": 0,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "members",
+            "name": "discord_id"
+          }
+        }
       },
       {
         "name": "shortcode",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "members",
+            "name": "shortcode"
+          }
+        }
       },
       {
         "name": "nickname",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "members",
+            "name": "nickname"
+          }
+        }
       },
       {
         "name": "realname",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "members",
+            "name": "realname"
+          }
+        }
       },
       {
         "name": "fresher",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "members",
+            "name": "fresher"
+          }
+        }
       }
     ],
     "parameters": {
