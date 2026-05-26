@@ -51,7 +51,12 @@ pub(crate) async fn nick(
 #[allow(clippy::unused_async)]
 #[poise::command(
     slash_command,
-    subcommands("whois_by_id", "whois_by_nickname", "whois_by_realname")
+    subcommands(
+        "whois_by_id",
+        "whois_by_nickname",
+        "whois_by_realname",
+        "whois_gaijin"
+    )
 )]
 pub(crate) async fn whois(_ctx: ACtx<'_>) -> Result<(), Error> {
     unreachable!()
@@ -118,6 +123,31 @@ pub(crate) async fn whois_by_realname(ctx: ACtx<'_>, realname: String) -> Result
             });
 
             ctx.ereply(format!("Possible matches for {realname}: {matches}"))
+                .await?;
+        }
+    }
+    Ok(())
+}
+
+/// (Public) Find gaijin by Name
+#[tracing::instrument(skip_all)]
+#[poise::command(slash_command, rename = "gaijin")]
+pub(crate) async fn whois_gaijin(ctx: ACtx<'_>, name: String) -> Result<(), Error> {
+    tracing::info!("{} {name}", ctx.author().name);
+    if let Some(m) = db::get_gaijin_by_name(&ctx.data().db, &name).await? {
+        ctx.ereply(format!("{name}: <@{}>", m.discord_id)).await?;
+    } else {
+        let members = db::get_gaijin_by_name_fuzzy(&ctx.data().db, &name, 3).await?;
+        if members.is_empty() {
+            ctx.ereply(format!("No member entry found for name {name}"))
+                .await?;
+        } else {
+            let matches = members.iter().fold(String::new(), |mut s, g| {
+                write!(s, " <@{}>", g.discord_id).expect("String write! is infallible");
+                s
+            });
+
+            ctx.ereply(format!("Possible matches for {name}: {matches}"))
                 .await?;
         }
     }
