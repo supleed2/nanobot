@@ -14,12 +14,15 @@ RUN cargo build --release
 
 FROM debian:trixie-slim AS app
 WORKDIR /app
-COPY fuzzy_linux_*.so ./
-COPY --from=builder /app/target/release/nano ./
-RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 1000 appgroup && useradd -g appgroup -s /sbin/nologin -u 1000 appuser
-RUN chown appuser:appgroup ./nano
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends wget ca-certificates \
+	&& rm -rf /var/lib/apt/lists/* && \
+	groupadd --gid 1000 appgroup && \
+	useradd --uid 1000 --gid appgroup --shell /usr/sbin/nologin appuser
+COPY --chmod=644 fuzzy_linux_*.so ./
+COPY --from=builder --chmod=755 /app/target/release/nano ./
+ENV LD_LIBRARY_PATH=/app
 EXPOSE 6266
-HEALTHCHECK CMD wget --no-verbose --spider --tries=1 http://localhost:6266/up || exit 1
+HEALTHCHECK CMD wget --no-verbose --spider --tries=1 http://127.0.0.1:6266/up || exit 1
 USER appuser
 ENTRYPOINT ["./nano"]
