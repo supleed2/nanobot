@@ -1,5 +1,8 @@
 use crate::{db, ACtx, Error};
-use poise::{serenity_prelude as serenity, CreateReply, ReplyHandle};
+use poise::{
+    serenity_prelude::{self as serenity, CreateEmbed, CreateMessage},
+    CreateReply, ReplyHandle,
+};
 use std::fmt::Write as _;
 
 trait EphemeralReply {
@@ -11,6 +14,37 @@ impl EphemeralReply for ACtx<'_> {
         let reply = CreateReply::default().ephemeral(true).content(c);
         self.send(reply).await
     }
+}
+
+/// Update your nick according to nano (what shows up in `/whois`)
+#[poise::command(slash_command)]
+pub(crate) async fn nick(
+    ctx: ACtx<'_>,
+    #[min_length = 2]
+    #[max_length = 32]
+    nickname: String,
+) -> Result<(), Error> {
+    let u = ctx.author();
+    let old_nickname = db::get_member_by_id(&ctx.data().db, u.id.into())
+        .await?
+        .map_or("<missing>".to_string(), |m| m.nickname);
+    tracing::info!("{} {old_nickname} -> {nickname}", u.name);
+    if db::edit_member_nickname(&ctx.data().db, u.id.into(), &nickname).await? {
+        ctx.ereply(format!("Nick updated to {nickname}")).await?;
+        let embed = CreateEmbed::new()
+            .title("Nick updated")
+            .thumbnail(u.face())
+            .description(u.to_string())
+            .field("Old Nick", old_nickname, true)
+            .field("New Nick", nickname, true)
+            .timestamp(serenity::Timestamp::now());
+        let msg = CreateMessage::new().embed(embed);
+        ctx.data().au_ch_id.send_message(ctx.http(), msg).await?;
+    } else {
+        ctx.ereply("Failed to update nick, please try again or message committee for help")
+            .await?;
+    }
+    Ok(())
 }
 
 /// Unreachable, used to create whois command folder
