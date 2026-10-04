@@ -1,4 +1,4 @@
-use crate::{var, verify, Data, Error, Fresher};
+use crate::{ea::current_url, var, verify, Data, Error, Fresher};
 use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity, FullEvent};
 use tokio::signal::ctrl_c;
@@ -12,7 +12,7 @@ pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, E
         au_ch_id: var!("AU_CHANNEL_ID", _),
         db: pool,
         ea_key: var!("EA_API_KEY"),
-        ea_url: var!("EA_API_URL"),
+        ea_url: current_url(&var!("EA_API_URL")),
         fresher_pg: var!("FRESHER_PG_ID", _),
         fresher_ug: var!("FRESHER_UG_ID", _),
         gaijin: var!("GAIJIN_ID", _),
@@ -27,7 +27,7 @@ pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, E
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: crate::cmds::all_commands(),
-            event_handler: { |c, e, f, d| Box::pin(event_handler(c, e, f, d)) },
+            event_handler: { |f, e| Box::pin(event_handler(f, e)) },
             ..Default::default()
         })
         .setup(move |ctx, _, _| {
@@ -45,11 +45,12 @@ pub(crate) fn nanobot(pool: sqlx::SqlitePool) -> Result<poise::Framework<Data, E
 }
 
 async fn event_handler(
-    ctx: &serenity::Context,
+    framework: poise::FrameworkContext<'_, Data, Error>,
     event: &FullEvent,
-    _framework: poise::FrameworkContext<'_, Data, Error>,
-    data: &Data,
 ) -> Result<(), Error> {
+    let ctx = framework.serenity_context;
+    let data = framework.user_data;
+
     match event {
         FullEvent::GuildMemberAddition { new_member } => {
             tracing::info!("Member joined: {}", new_member.user.name);

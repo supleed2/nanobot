@@ -118,7 +118,7 @@ pub(crate) use var;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Load environment variables from .env file
-    dotenvy::dotenv().ok();
+    dotenvy::dotenv().context("failed to load .env")?;
 
     // Set Up Tracing Subscriber
     nano::init_tracing_subscriber();

@@ -1,6 +1,6 @@
 [package]
 name = "nano"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Discord bot to authenticate and de-anonymise users"
 homepage = "https://github.com/supleed2/nanobot"
@@ -11,21 +11,22 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.104"
 axum = "0.8.9"
+chrono = "0.4.45"
 dotenvy = "0.15.7"
 indoc = "2.0.7"
-poise = "0.6.2"
-reqwest = { version = "0.13.4", features = ["json"] }
-rootcause = "0.12.1"
-serde = { version = "1.0.228", features = ["derive"] }
+poise = "0.7.0"
+reqwest = { version = "0.13.5", features = ["json"] }
+rootcause = "0.13.0"
+serde = { version = "1.0.229", features = ["derive"] }
 sqlx = { version = "0.9.0", features = [
 	"runtime-tokio",
 	"sqlite",
 	"sqlx-toml",
 ] }
-tokio = { version = "1.52.3", features = ["full"] }
-tokio-util = "0.7.18"
+tokio = { version = "1.53.2", features = ["full"] }
+tokio-util = "0.7.19"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "time"] }
 url = "2.5.8"

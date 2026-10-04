@@ -23,3 +23,13 @@ pub(crate) async fn get_members_list(
         .await?;
     Ok(members)
 }
+
+pub(crate) fn current_url(url: &str) -> String {
+    use chrono::Datelike as _;
+
+    let now = chrono::Utc::now();
+    let year = now.year() - i32::from(now.month() < 10);
+    let (start, end) = (year % 100, (year + 1) % 100);
+
+    format!("{url}{start:02}-{end:02}")
+}
