@@ -1,6 +1,6 @@
 [package]
 name = "nano"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 description = "Discord bot to authenticate and de-anonymise users"
 homepage = "https://github.com/supleed2/nanobot"
@@ -15,8 +15,8 @@ anyhow = "1.0.104"
 axum = "0.8.9"
 chrono = "0.4.45"
 dotenvy = "0.15.7"
-indoc = "2.0.7"
-poise = "0.7.0"
+indoc = "2.0.8"
+poise = "0.7.1"
 reqwest = { version = "0.13.5", features = ["json"] }
 rootcause = "0.13.0"
 serde = { version = "1.0.229", features = ["derive"] }
@@ -25,8 +25,8 @@ sqlx = { version = "0.9.0", features = [
 	"sqlite",
 	"sqlx-toml",
 ] }
-tokio = { version = "1.53.2", features = ["full"] }
-tokio-util = "0.7.19"
+tokio = { version = "1.54.1", features = ["full"] }
+tokio-util = "0.7.20"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "time"] }
 url = "2.5.8"
