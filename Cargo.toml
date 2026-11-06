@@ -1,6 +1,6 @@
 [package]
 name = "nano"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 description = "Discord bot to authenticate and de-anonymise users"
 homepage = "https://github.com/supleed2/nanobot"

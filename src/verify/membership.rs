@@ -7,7 +7,7 @@ use poise::Modal;
 
 const MEMBERSHIP_INTRO: &str = indoc::indoc! {"
     To use automatic verification via Membership:
-    - Enter your Union order number (from this academic year)
+    - Enter your Union account email address (discarded after matching your membership)
     - Enter your Imperial shortcode
       - For Life members, your shortcode will be from when you were a student
       - For Associate members, this is your CID, in the format `AM-12345` or similar
@@ -53,9 +53,9 @@ pub(crate) async fn membership_1(
 #[derive(Modal)]
 #[name = "ICAS Membership Verification"]
 struct Membership {
-    #[name = "ICAS Membership Union Order Number"]
-    #[placeholder = "1234567"]
-    order: String,
+    #[name = "Union Account Email"]
+    #[placeholder = "first.last26@imperial.ac.uk"]
+    email: String,
     #[name = "Imperial Shortcode"]
     #[placeholder = "ab1234"]
     shortcode: String,
@@ -102,7 +102,7 @@ pub(crate) async fn membership_3(
 ) -> Result<(), Error> {
     match Membership::parse(m.data.clone()) {
         Ok(Membership {
-            order,
+            email,
             shortcode,
             nickname,
         }) => {
@@ -124,9 +124,10 @@ pub(crate) async fn membership_3(
                     return Ok(());
                 }
             };
+            let email = email.to_lowercase();
             let Some(member) = members.iter().find(|member| {
                 ((member.login.is_empty() && member.cid == shortcode) || member.login == shortcode)
-                    && member.order_no.to_string() == order
+                    && member.email.to_lowercase() == email
             }) else {
                 let msg = "Sorry, your order was not found, please check the \
                     order number and that it is for your current year's membership";

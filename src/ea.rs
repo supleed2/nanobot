@@ -5,8 +5,8 @@ pub(crate) struct Member {
     pub surname: String,
     #[serde(rename = "CID")]
     pub cid: String,
+    pub email: String,
     pub login: String,
-    pub order_no: usize,
 }
 
 #[tracing::instrument(skip_all)]
